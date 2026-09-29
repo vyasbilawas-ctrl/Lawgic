@@ -2,16 +2,18 @@ from flask import Flask, render_template, request, jsonify
 from database import Session, Article
 from scraper import fetch_and_store_news
 from apscheduler.schedulers.background import BackgroundScheduler
+from datetime import datetime, timedelta
 import atexit
 from sqlalchemy import or_
 
 app = Flask(__name__)
 
 scheduler = BackgroundScheduler()
-# Run once immediately
-scheduler.add_job(func=fetch_and_store_news, trigger="date")
-# Then run every 60 minutes
-scheduler.add_job(func=fetch_and_store_news, trigger="interval", minutes=60)
+# Run once shortly after startup, then continue every hour.
+# The previous version used a bare `trigger="date"` without `run_date`,
+# which causes APScheduler to fail during app startup.
+scheduler.add_job(func=fetch_and_store_news, trigger="date", run_date=datetime.now() + timedelta(seconds=5))
+scheduler.add_job(func=fetch_and_store_news, trigger="interval", hours=1)
 scheduler.start()
 
 atexit.register(lambda: scheduler.shutdown())
@@ -47,7 +49,7 @@ def ai_search():
 
 @app.route('/api/ask-ai', methods=['POST'])
 def ask_ai():
-    data = request.json
+    data = request.get_json(silent=True) or {}
     query = data.get('query', '')
     
     if not query:
