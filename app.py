@@ -4,20 +4,31 @@ from datetime import datetime, timedelta
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, jsonify, render_template, request
-from sqlalchemy import or_
+from sqlalchemy import or_, text
 
 from database import Article, Session
 from scraper import fetch_and_store_news
 
 app = Flask(__name__)
-app.config["JSON_SORT_KEYS"] = False
 
 scheduler = BackgroundScheduler(timezone="UTC")
 
 
+def env_bool(name, default=False):
+    return os.getenv(name, str(default)).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def fetch_interval_minutes():
+    try:
+        return max(5, int(os.getenv("NEWS_FETCH_MINUTES", "60")))
+    except ValueError:
+        app.logger.warning("Invalid NEWS_FETCH_MINUTES; using 60 minutes")
+        return 60
+
+
 def start_scheduler():
-    """Start one safe scheduler instance for deployments that enable it."""
-    if scheduler.running or os.getenv("ENABLE_SCHEDULER", "true").lower() not in {"1", "true", "yes"}:
+    """Start the optional in-process scheduler once per web process."""
+    if scheduler.running or not env_bool("ENABLE_SCHEDULER", False):
         return
 
     scheduler.add_job(
@@ -31,8 +42,8 @@ def start_scheduler():
     scheduler.add_job(
         fetch_and_store_news,
         trigger="interval",
-        minutes=int(os.getenv("NEWS_FETCH_MINUTES", "60")),
-        id="hourly-news-fetch",
+        minutes=fetch_interval_minutes(),
+        id="news-fetch",
         replace_existing=True,
         coalesce=True,
         max_instances=1,
@@ -45,8 +56,8 @@ start_scheduler()
 atexit.register(lambda: scheduler.shutdown(wait=False) if scheduler.running else None)
 
 
-def get_clean_query(value, max_length=500):
-    return (value or "").strip()[:max_length]
+def clean_text(value, max_length=500):
+    return str(value or "").strip()[:max_length]
 
 
 @app.after_request
@@ -61,8 +72,8 @@ def add_security_headers(response):
 def index():
     session = Session()
     try:
-        category_filter = get_clean_query(request.args.get("category"), 100)
-        search_query = get_clean_query(request.args.get("q"))
+        category_filter = clean_text(request.args.get("category"), 100)
+        search_query = clean_text(request.args.get("q"))
         query = session.query(Article)
         if category_filter:
             query = query.filter(Article.category == category_filter)
@@ -70,8 +81,21 @@ def index():
             term = f"%{search_query}%"
             query = query.filter(or_(Article.title.ilike(term), Article.summary.ilike(term)))
         articles = query.order_by(Article.published_date.desc()).limit(50).all()
-        categories = [row[0] for row in session.query(Article.category).filter(Article.category.isnot(None)).distinct().order_by(Article.category).all()]
-        return render_template("index.html", articles=articles, categories=categories, current_cat=category_filter, query=search_query)
+        categories = [
+            row[0]
+            for row in session.query(Article.category)
+            .filter(Article.category.isnot(None))
+            .distinct()
+            .order_by(Article.category)
+            .all()
+        ]
+        return render_template(
+            "index.html",
+            articles=articles,
+            categories=categories,
+            current_cat=category_filter,
+            query=search_query,
+        )
     finally:
         session.close()
 
@@ -90,7 +114,7 @@ def ai_search():
 def health():
     session = Session()
     try:
-        session.execute(__import__("sqlalchemy").text("SELECT 1"))
+        session.execute(text("SELECT 1"))
         return jsonify({"status": "ok"})
     finally:
         session.close()
@@ -99,7 +123,7 @@ def health():
 @app.route("/api/ask-ai", methods=["POST"])
 def ask_ai():
     data = request.get_json(silent=True) or {}
-    query = get_clean_query(data.get("query"), 2000)
+    query = clean_text(data.get("query"), 2000)
     if not query:
         return jsonify({"error": "Please enter a legal question."}), 400
 
@@ -123,10 +147,15 @@ At the end, list 2-4 relevant real judgments only when you are confident they ar
         answer = getattr(response, "text", "").strip()
         if not answer:
             raise ValueError("The AI returned an empty response")
-        answer = bleach.clean(answer, tags=["p", "br", "strong", "ul", "ol", "li"], attributes={}, strip=True)
+        answer = bleach.clean(
+            answer,
+            tags=["p", "br", "strong", "ul", "ol", "li"],
+            attributes={},
+            strip=True,
+        )
         return jsonify({"response": answer})
-    except Exception as exc:
-        app.logger.exception("AI request failed: %s", exc)
+    except Exception:
+        app.logger.exception("AI request failed")
         return jsonify({"error": "Unable to process the request right now. Please try again."}), 502
 
 
@@ -148,4 +177,8 @@ def not_found(_error):
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.getenv("PORT", "5000")), debug=os.getenv("FLASK_DEBUG", "false").lower() == "true")
+    app.run(
+        host="0.0.0.0",
+        port=int(os.getenv("PORT", "5000")),
+        debug=env_bool("FLASK_DEBUG", False),
+    )
