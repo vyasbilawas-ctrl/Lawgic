@@ -18,6 +18,12 @@ class Article(Base):
     source = Column(String(100), nullable=False, default="Unknown")
     category = Column(String(100), default="General News", index=True)
 
+class Subscriber(Base):
+    __tablename__ = "subscribers"
+    id = Column(Integer, primary_key=True)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    subscribed_at = Column(DateTime, default=datetime.utcnow)
+
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///legal_news.db")
 if DATABASE_URL.startswith("postgres://"):

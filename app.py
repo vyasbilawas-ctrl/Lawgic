@@ -6,7 +6,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, jsonify, render_template, request
 from sqlalchemy import or_, text
 
-from database import Article, Session
+from database import Article, Session, Subscriber
 from scraper import fetch_and_store_news
 
 app = Flask(__name__)
@@ -79,6 +79,29 @@ def bare_acts():
 def ai_search():
     return render_template("ai_search.html")
 
+
+
+@app.route("/api/subscribe", methods=["POST"])
+def subscribe():
+    data = request.get_json(silent=True) or {}
+    email = str(data.get("email", "")).strip().lower()
+    if "@" not in email or "." not in email:
+        return jsonify({"error": "Invalid email address."}), 400
+    
+    session = Session()
+    try:
+        if session.query(Subscriber).filter_by(email=email).first():
+            return jsonify({"message": "You are already subscribed!"}), 200
+            
+        session.add(Subscriber(email=email))
+        session.commit()
+        return jsonify({"message": "Successfully subscribed!"}), 200
+    except Exception as e:
+        session.rollback()
+        app.logger.error(f"Error in subscribe: {e}")
+        return jsonify({"error": "Unable to subscribe right now."}), 500
+    finally:
+        session.close()
 
 @app.route("/health")
 def health():
