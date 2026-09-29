@@ -54,7 +54,7 @@ def rewrite_with_gemini(title, summary):
     if not api_key: return title, summary
     try:
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel(os.getenv("GEMINI_SCRAPER_MODEL", "gemini-3.1-pro-preview"))
+        model = genai.GenerativeModel(os.getenv("GEMINI_SCRAPER_MODEL", "gemini-3.5-flash"))
         prompt = f"""Rewrite this into a proper news format. If it is a raw court case (like from Indian Kanoon), give it a short catchy news heading (TITLE) and a clear, brief news summary of the case (SUMMARY). Return exactly TITLE: and SUMMARY: lines.
 TITLE: {title}
 SUMMARY: {summary}"""

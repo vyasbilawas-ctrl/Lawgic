@@ -106,7 +106,7 @@ def ask_ai():
         import markdown
 
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel(os.getenv("GEMINI_MODEL", "gemini-3.1-pro-preview"))
+        model = genai.GenerativeModel(os.getenv("GEMINI_MODEL", "gemini-3.5-flash"))
         prompt = f"""You are Lawgic's careful Indian legal research assistant. Answer in {language}.
 Answer this question: {query}
 
