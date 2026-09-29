@@ -103,16 +103,28 @@ def ask_ai():
     try:
         import bleach
         import google.generativeai as genai
+        import markdown
+
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel(os.getenv("GEMINI_MODEL", "gemini-2.5-pro"))
         prompt = f"""You are Lawgic's careful Indian legal research assistant. Answer in {language}.
-Question: {query}
-Give a clear, neutral answer based on Indian law. Use only <p>, <br>, <strong>, <ul>, <ol>, and <li> tags. Explain that this is general information, not legal advice. Do not invent citations. If uncertain, say so. At the end, list 2-4 relevant real judgments only when confident, with case name and one-sentence holding."""
+Answer this question: {query}
+
+Give a clear, neutral answer based on Indian law. Use markdown for formatting (e.g. **bold**, lists).
+Explain that this is general information, not legal advice. Do not invent citations. If uncertain, say so.
+At the end, list 2-4 relevant real judgments only when you are confident they are relevant, with the case name and one-sentence holding."""
         response = model.generate_content(prompt, request_options={"timeout": 120})
         answer = getattr(response, "text", "").strip()
         if not answer:
-            raise ValueError("Empty AI response")
-        answer = bleach.clean(answer, tags=["p", "br", "strong", "ul", "ol", "li"], attributes={}, strip=True)
+            raise ValueError("The AI returned an empty response")
+            
+        html_answer = markdown.markdown(answer)
+        answer = bleach.clean(
+            html_answer,
+            tags=["p", "br", "strong", "ul", "ol", "li", "em", "b", "i", "h1", "h2", "h3", "h4", "h5", "h6"],
+            attributes={},
+            strip=True,
+        )
         return jsonify({"response": answer})
     except Exception:
         app.logger.exception("AI request failed")
