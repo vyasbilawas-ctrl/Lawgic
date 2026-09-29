@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Legal Assistant - VerdictHub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-color: #0b2545;
+            --accent-color: #d4af37;
+            --bg-color: #f4f7f6;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: #333;
+        }
+        h1, h2, h3, .navbar-brand {
+            font-family: 'Playfair Display', serif;
+        }
+        .navbar {
+            background-color: rgba(255, 255, 255, 0.95) !important;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            padding: 15px 0;
+        }
+        .navbar-brand img {
+            height: 50px;
+            margin-right: 15px;
+            border-radius: 5px;
+        }
+        .navbar-brand {
+            color: var(--primary-color) !important;
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+        
+        .hero {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #133c6d 100%);
+            color: white;
+            padding: 50px 0;
+            text-align: center;
+        }
+        .hero h1 { font-size: 2.5rem; font-weight: 700; }
+        
+        .search-container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-top: -30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 10;
+        }
+        .search-box {
+            border: 2px solid #eee;
+            border-radius: 30px;
+            padding: 15px 25px;
+            font-size: 1.1rem;
+            transition: 0.3s;
+        }
+        .search-box:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
+            outline: none;
+        }
+        .btn-search {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 15px 40px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: 0.3s;
+        }
+        .btn-search:hover {
+            background-color: #b5952f;
+            color: white;
+        }
+        
+        .results-container {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            margin-top: 30px;
+            margin-bottom: 60px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            display: none;
+        }
+        
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            margin: 40px 0;
+        }
+        
+        .ai-response {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #444;
+        }
+        
+        .kanoon-btn {
+            background-color: #1a4a76;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 20px;
+            font-weight: 500;
+        }
+        .kanoon-btn:hover {
+            background-color: #113455;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <img src="/static/images/logo.jpg" alt="Logo">
+                VerdictHub
+            </a>
+            <div class="ms-auto d-flex align-items-center">
+                <a href="/" class="btn btn-outline-dark me-2">News</a>
+                <a href="/bare-acts" class="btn btn-outline-dark me-2">Bare Acts</a>
+                <a href="/ai-search" class="btn btn-dark">AI Research</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="hero">
+        <div class="container">
+            <h1>AI Legal Research Assistant</h1>
+            <p class="mt-2" style="font-size: 1.1rem; opacity: 0.9;">Ask any legal question. Get instant answers and relevant landmark judgments.</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                
+                <div class="search-container">
+                    <form id="aiSearchForm" class="d-flex">
+                        <input type="text" id="queryInput" class="form-control search-box me-3" placeholder="e.g. Anticipatory bail conditions under BNSS..." required>
+                        <button type="submit" class="btn btn-search"><i class="fas fa-magic me-2"></i>Ask AI</button>
+                    </form>
+                </div>
+                
+                <div class="loading-spinner" id="loadingSpinner">
+                    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <h5 class="mt-3" style="color: var(--primary-color);">Analyzing Legal Databases...</h5>
+                    <p class="text-muted">Fetching judgments and preparing response.</p>
+                </div>
+
+                <div class="results-container" id="resultsContainer">
+                    <h3 style="color: var(--primary-color); border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 25px;">
+                        <i class="fas fa-robot me-2" style="color: var(--accent-color);"></i> AI Legal Opinion
+                    </h3>
+                    
+                    <div class="ai-response" id="aiResponseText"></div>
+                    
+                    <div class="mt-5 pt-4" style="border-top: 1px dashed #ccc; text-align: center;">
+                        <p class="text-muted mb-2">Want to read the full judgments mentioned above?</p>
+                        <a href="#" id="kanoonLink" target="_blank" class="kanoon-btn">
+                            <i class="fas fa-search me-2"></i> Search these Cases on Indian Kanoon
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('aiSearchForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const query = document.getElementById('queryInput').value;
+            
+            document.getElementById('resultsContainer').style.display = 'none';
+            document.getElementById('loadingSpinner').style.display = 'block';
+            
+            try {
+                const response = await fetch('/api/ask-ai', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: query })
+                });
+                
+                const data = await response.json();
+                document.getElementById('loadingSpinner').style.display = 'none';
+                
+                if (response.ok) {
+                    document.getElementById('aiResponseText').innerHTML = data.response;
+                    document.getElementById('kanoonLink').href = "https://indiankanoon.org/search/?formInput=" + encodeURIComponent(query);
+                    document.getElementById('resultsContainer').style.display = 'block';
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (err) {
+                document.getElementById('loadingSpinner').style.display = 'none';
+                alert('Something went wrong. Please try again later.');
+            }
+        });
+    </script>
+</body>
+</html>
