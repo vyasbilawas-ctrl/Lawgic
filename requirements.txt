@@ -1,0 +1,10 @@
+Flask
+feedparser
+requests
+beautifulsoup4
+apscheduler
+SQLAlchemy
+python-dateutil
+gunicorn
+google-generativeai
+python-dotenv
