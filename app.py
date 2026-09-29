@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 from database import Session, Article
 from scraper import fetch_and_store_news
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -56,11 +56,13 @@ def ask_ai():
     try:
         import google.generativeai as genai
         import os
-        genai.configure(api_key=os.environ.get("GEMINI_API_KEY", ""))
-        model = genai.GenerativeModel('gemini-1.5-pro')
+        # Use a separate key for search if available, to avoid rate limits from the scraper
+        search_api_key = os.environ.get("GEMINI_SEARCH_API_KEY", "") or os.environ.get("GEMINI_API_KEY", "")
+        genai.configure(api_key=search_api_key)
+        model = genai.GenerativeModel('gemini-2.5-pro')
         
         prompt = f"""
-        You are an expert Indian Legal AI Assistant on the VerdictHub platform. 
+        You are an expert Indian Legal AI Assistant on the Lawgic platform. 
         A user has asked the following legal query: "{query}"
         
         Please provide a comprehensive but easy-to-understand answer based on Indian Law. 
