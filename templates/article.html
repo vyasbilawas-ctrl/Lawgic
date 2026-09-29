@@ -49,31 +49,65 @@
         .navbar .nav-link {
             color: var(--primary-color) !important;
             font-weight: 500;
+            margin: 0 8px;
+            transition: color 0.3s ease;
         }
         
         .navbar .nav-link:hover {
             color: var(--accent-color) !important;
         }
         
-        .article-container {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
-            padding: 50px;
-            margin: 40px auto;
-            max-width: 900px;
+        /* Article Container */
+        .article-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #133c6d 100%);
+            color: white;
+            padding: 60px 0;
+            margin-bottom: 40px;
+        }
+        
+        .article-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            line-height: 1.3;
         }
         
         .article-meta {
+            font-size: 0.95rem;
+            opacity: 0.9;
+        }
+        
+        .article-meta span {
+            margin-right: 20px;
+        }
+        
+        .article-content {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 40px;
+            line-height: 1.8;
+            font-size: 1.05rem;
+        }
+        
+        .article-content img {
+            max-width: 100%;
+            height: auto;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        
+        .article-badges {
+            margin-bottom: 20px;
             display: flex;
-            gap: 15px;
-            margin-bottom: 30px;
+            gap: 10px;
             flex-wrap: wrap;
         }
         
         .badge {
-            font-size: 0.9rem;
-            padding: 8px 15px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
             font-weight: 600;
         }
         
@@ -83,76 +117,26 @@
         }
         
         .badge-category {
-            background-color: #f0f0f0;
+            background-color: var(--accent-color);
             color: var(--primary-color);
         }
         
-        .article-container h1 {
-            color: var(--primary-color);
-            font-size: 2.8rem;
-            margin: 30px 0 20px;
-            line-height: 1.3;
-            font-weight: 700;
+        .read-more {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 30px;
+            background-color: var(--accent-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: 0.3s;
         }
         
-        .article-date {
-            color: #999;
-            font-size: 1rem;
-            margin-bottom: 30px;
-            border-bottom: 2px solid #f0f0f0;
-            padding-bottom: 20px;
-        }
-        
-        .article-content {
-            font-size: 1.1rem;
-            line-height: 1.8;
-            color: #444;
-            margin: 30px 0;
-        }
-        
-        .article-content p {
-            margin-bottom: 20px;
-        }
-        
-        .source-link {
-            margin-top: 40px;
-            padding-top: 30px;
-            border-top: 2px solid #f0f0f0;
-        }
-        
-        .btn-back {
+        .read-more:hover {
             background-color: var(--primary-color);
             color: white;
-            padding: 12px 30px;
-            border-radius: 25px;
             text-decoration: none;
-            font-weight: 600;
-            display: inline-block;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-back:hover {
-            background-color: var(--accent-color);
-            color: white;
-            transform: translateY(-2px);
-        }
-        
-        .btn-source {
-            background-color: var(--accent-color);
-            color: white;
-            padding: 12px 30px;
-            border-radius: 25px;
-            text-decoration: none;
-            font-weight: 600;
-            display: inline-block;
-            transition: all 0.3s ease;
-            margin-left: 10px;
-        }
-        
-        .btn-source:hover {
-            background-color: #b5952f;
-            color: white;
-            transform: translateY(-2px);
         }
         
         footer {
@@ -188,41 +172,52 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <div class="ms-auto d-flex align-items-center gap-2">
-                <a href="/" class="nav-link"><i class="fas fa-arrow-left me-1"></i>Back to News</a>
+                <a href="/" class="nav-link"><i class="fas fa-newspaper me-1"></i>News</a>
+                <a href="/bare-acts" class="nav-link"><i class="fas fa-book me-1"></i>Bare Acts</a>
+                <a href="/ai-search" class="nav-link"><i class="fas fa-robot me-1"></i>AI Research</a>
             </div>
         </div>
     </div>
 </nav>
 
-<!-- Article -->
-<div class="container">
-    <article class="article-container">
+<!-- Article Header -->
+<div class="article-header">
+    <div class="container">
+        <h1>{{ article.title }}</h1>
         <div class="article-meta">
+            <span>📰 {{ article.source }}</span>
+            {% if article.category %}
+            <span>📁 {{ article.category }}</span>
+            {% endif %}
+            {% if article.published_date %}
+            <span>📅 {{ article.published_date.strftime('%B %d, %Y') }}</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Article Content -->
+<div class="container">
+    <div class="article-content">
+        {% if article.image_url %}
+        <img src="{{ article.image_url }}" alt="{{ article.title }}">
+        {% endif %}
+        
+        <div class="article-badges">
             <span class="badge badge-source">{{ article.source }}</span>
             {% if article.category %}
             <span class="badge badge-category">{{ article.category }}</span>
             {% endif %}
         </div>
         
-        <h1>{{ article.title }}</h1>
+        <p>{{ article.summary|safe }}</p>
         
-        <div class="article-date">
-            {% if article.published_date %}
-                📅 {{ article.published_date.strftime('%B %d, %Y • %I:%M %p') }}
-            {% endif %}
-        </div>
-        
-        <div class="article-content">
-            {{ article.summary|safe }}
-        </div>
-        
-        <div class="source-link">
-            <a href="/" class="btn-back"><i class="fas fa-arrow-left"></i> Back to News</a>
-            {% if article.link %}
-            <a href="{{ article.link }}" target="_blank" rel="noopener noreferrer" class="btn-source"><i class="fas fa-external-link-alt"></i> Read Original</a>
-            {% endif %}
-        </div>
-    </article>
+        {% if article.link %}
+        <a href="{{ article.link }}" target="_blank" class="read-more">
+            <i class="fas fa-external-link-alt me-2"></i>Read Full Article
+        </a>
+        {% endif %}
+    </div>
 </div>
 
 <!-- Footer -->
