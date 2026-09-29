@@ -1,4 +1,5 @@
 import os
+import requests
 import feedparser
 import google.generativeai as genai
 from datetime import datetime
@@ -13,8 +14,9 @@ load_dotenv()
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY", ""))
 
 RSS_FEEDS = {
-    'LiveLaw': 'https://www.livelaw.in/rss',
-    'Bar and Bench': 'https://www.barandbench.com/rss'
+    'Bar and Bench': 'https://www.barandbench.com/feed',
+    'Verdictum': 'https://www.verdictum.in/feed',
+    'Indian Kanoon SC': 'https://indiankanoon.org/feeds/latest/supremecourt/'
 }
 
 def parse_date(date_str):
@@ -81,17 +83,29 @@ def fetch_and_store_news():
     for source, url in RSS_FEEDS.items():
         print(f"Fetching from {source}...")
         try:
-            feed = feedparser.parse(url)
+            headers = {'User-Agent': 'Mozilla/5.0'}
+            response = requests.get(url, headers=headers)
+            feed = feedparser.parse(response.content)
+            
+            import time
             for entry in feed.entries:
                 link = entry.get('link', '')
                 existing = session.query(Article).filter_by(link=link).first()
                 if not existing:
                     original_title = entry.get('title', '')
                     summary_html = entry.get('summary', '')
-                    original_summary = BeautifulSoup(summary_html, 'html.parser').get_text()[:500] + '...'
+                    soup = BeautifulSoup(summary_html, 'html.parser')
+                    
+                    # Extract image URL
+                    image_url = ""
+                    if 'media_content' in entry and len(entry.media_content) > 0:
+                        image_url = entry.media_content[0].get('url', '')
+                    
+                    original_summary = soup.get_text()[:500] + '...'
                     
                     # REWRITE CONTENT USING AI
                     title, summary_text = rewrite_with_gemini(original_title, original_summary)
+                    time.sleep(4) # Respect Gemini API 15 RPM Rate Limit
                     
                     category = determine_category(title, summary_text)
                     
@@ -102,12 +116,13 @@ def fetch_and_store_news():
                         title=title,
                         link=link,
                         summary=summary_text,
+                        image_url=image_url,
                         published_date=pub_date,
                         source=source,
                         category=category
                     )
                     session.add(article)
-            session.commit()
+                    session.commit()
             print(f"Finished fetching from {source}.")
         except Exception as e:
             print(f"Error fetching from {source}: {e}")

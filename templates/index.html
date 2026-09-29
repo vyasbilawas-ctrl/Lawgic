@@ -266,7 +266,15 @@
             </button>
             
             <div class="collapse navbar-collapse" id="navContent">
-                <form class="ms-auto d-flex" action="/" method="GET">
+                <ul class="navbar-nav ms-auto me-3">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/" style="font-weight: 600;">News</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/bare-acts" style="font-weight: 600;">Bare Acts</a>
+                    </li>
+                </ul>
+                <form class="d-flex" action="/" method="GET">
                     <div class="position-relative">
                         <input type="text" name="q" class="search-box" placeholder="Search verdicts, laws, judges..." value="{{ query or '' }}">
                         <button type="submit" style="position:absolute; right:15px; top:10px; background:none; border:none; color:#888;">
@@ -285,6 +293,9 @@
                 <div class="col-lg-8" data-aos="fade-up" data-aos-duration="1000">
                     <h1>Unbiased Legal Intelligence.</h1>
                     <p>Powered by Advanced AI. We analyze and summarize real-time judgments from the Supreme Court and High Courts of India so you never miss a critical legal update.</p>
+                    <div class="mt-4" style="font-family: 'Playfair Display', serif; font-style: italic; font-size: 1.1rem; color: var(--accent-color);">
+                        Founder & Editor-in-Chief: <strong>Nikhil Vyas</strong>
+                    </div>
                 </div>
             </div>
         </div>
@@ -327,18 +338,30 @@
                 <div class="row">
                     {% for article in articles %}
                     <div class="col-md-12 mb-4" data-aos="fade-up" data-aos-duration="800" data-aos-delay="{{ loop.index0 % 10 * 100 }}">
-                        <div class="news-card">
-                            <div class="d-flex align-items-center mb-2">
-                                <span class="badge-source">{{ article.source }}</span>
-                                <span class="badge-cat">{{ article.category }}</span>
+                        <div class="news-card p-0" style="display: flex; flex-direction: row; align-items: stretch;">
+                            <!-- Image Section -->
+                            <div style="flex: 0 0 35%; overflow: hidden; border-top-left-radius: 15px; border-bottom-left-radius: 15px;">
+                                {% if article.image_url %}
+                                    <img src="{{ article.image_url }}" alt="News Image" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                                {% else %}
+                                    <img src="https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=800" alt="Legal Default" style="width: 100%; height: 100%; object-fit: cover; filter: grayscale(20%);">
+                                {% endif %}
                             </div>
-                            <h4 class="card-title">{{ article.title }}</h4>
-                            <div class="card-meta">
-                                <span><i class="far fa-calendar-alt"></i> {{ article.published_date.strftime('%B %d, %Y - %I:%M %p') }}</span>
-                                <span class="ms-3" style="color: var(--accent-color);"><i class="fas fa-robot"></i> AI Verified</span>
+                            
+                            <!-- Content Section -->
+                            <div style="flex: 1; padding: 25px;">
+                                <div class="d-flex align-items-center mb-2">
+                                    <span class="badge-source">{{ article.source }}</span>
+                                    <span class="badge-cat">{{ article.category }}</span>
+                                </div>
+                                <h4 class="card-title" style="font-size: 1.3rem;">{{ article.title }}</h4>
+                                <div class="card-meta">
+                                    <span><i class="far fa-calendar-alt"></i> {{ article.published_date.strftime('%B %d, %Y') }}</span>
+                                    <span class="ms-3" style="color: var(--accent-color);"><i class="fas fa-robot"></i> AI Verified</span>
+                                </div>
+                                <p class="card-text">{{ article.summary[:200] }}...</p>
+                                <a href="/article/{{ article.id }}" class="btn-read">Read News Detail <i class="fas fa-arrow-right ms-1"></i></a>
                             </div>
-                            <p class="card-text">{{ article.summary }}</p>
-                            <a href="{{ article.link }}" target="_blank" class="btn-read">Read Full Document <i class="fas fa-arrow-right ms-1"></i></a>
                         </div>
                     </div>
                     {% else %}
@@ -358,7 +381,8 @@
     <footer class="footer">
         <div class="container">
             <h3 style="color: var(--accent-color);">VerdictHub</h3>
-            <p class="mb-0">© 2026 VerdictHub. Automated Legal Intelligence.</p>
+            <p class="mb-1">© 2026 VerdictHub. Automated Legal Intelligence.</p>
+            <p class="mb-0" style="font-size: 0.9rem; opacity: 0.8;">Founded by <strong>Nikhil Vyas</strong></p>
         </div>
     </footer>
 
