@@ -3,398 +3,752 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lawgic - Advanced Legal Intelligence</title>
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <!-- Bootstrap -->
+    <title>Lawgic - Legal News & AI Research</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- AOS Animation -->
-    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-    
+
     <style>
         :root {
-            --primary-color: #0b2545;
-            --accent-color: #d4af37; /* Gold */
-            --bg-color: #f4f7f6;
-            --card-bg: rgba(255, 255, 255, 0.85);
+            --primary: #0b2545;
+            --primary-2: #133c6d;
+            --accent: #d4af37;
+            --red: #c41e3a;
+            --bg: #f5f7fa;
+            --text: #1a1a1a;
+            --muted: #667085;
+            --line: #e7eaf0;
+            --card: #ffffff;
+            --shadow: 0 12px 35px rgba(11, 37, 69, 0.12);
         }
 
+        * { box-sizing: border-box; }
         body {
+            margin: 0;
             font-family: 'Inter', sans-serif;
-            background-color: var(--bg-color);
-            color: #333;
-            overflow-x: hidden;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
         }
-
-        h1, h2, h3, h4, h5, .navbar-brand {
+        h1, h2, h3, h4, .brand {
             font-family: 'Playfair Display', serif;
         }
 
-        /* Top Bar */
-        .top-bar {
-            background-color: var(--primary-color);
-            color: white;
-            font-size: 0.85rem;
-            padding: 8px 0;
+        a {
+            text-decoration: none;
         }
-        .ticker-wrap {
-            width: 100%;
+
+        .navbar {
+            background: rgba(255,255,255,0.98);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(11, 37, 69, 0.08);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            padding: 12px 0;
+            box-shadow: 0 2px 10px rgba(11, 37, 69, 0.04);
+        }
+
+        .brand {
+            color: var(--primary) !important;
+            font-weight: 800;
+            font-size: 2rem;
+            letter-spacing: -0.04em;
+        }
+
+        .brand i {
+            color: var(--accent);
+            margin-right: 8px;
+        }
+
+        .brand small {
+            display: block;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.62rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-top: -2px;
+        }
+
+        .nav-link {
+            color: var(--text) !important;
+            font-weight: 600;
+            margin: 0 10px;
+            letter-spacing: 0.02em;
+        }
+
+        .nav-link:hover {
+            color: var(--red) !important;
+        }
+
+        .ticker {
+            background: linear-gradient(90deg, #c41e3a, #8a1228);
+            color: white;
+            padding: 10px 0;
+            font-size: 0.9rem;
             overflow: hidden;
             white-space: nowrap;
         }
-        .ticker {
+
+        .ticker-inner {
             display: inline-block;
-            animation: ticker 25s linear infinite;
+            padding-left: 100%;
+            animation: slide 25s linear infinite;
         }
-        @keyframes ticker {
-            0% { transform: translateX(100%); }
+
+        @keyframes slide {
+            0% { transform: translateX(0); }
             100% { transform: translateX(-100%); }
         }
 
-        /* Navbar */
-        .navbar {
-            background-color: rgba(255, 255, 255, 0.95) !important;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            padding: 15px 0;
+        .ticker .label {
+            display: inline-block;
+            background: rgba(255,255,255,0.12);
+            padding: 5px 10px;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-right: 18px;
         }
-        .navbar-brand img {
-            height: 50px;
-            margin-right: 15px;
-            border-radius: 5px;
+
+        .hero {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%);
+            color: white;
+            text-align: center;
+            padding: 80px 0 110px;
         }
-        .navbar-brand {
-            color: var(--primary-color) !important;
+
+        .hero h1 {
+            font-size: clamp(2.4rem, 5vw, 4rem);
+            font-weight: 800;
+            letter-spacing: -0.05em;
+            margin: 0 0 12px;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            opacity: 0.95;
+            margin: 0;
+        }
+
+        .search-shell {
+            max-width: 860px;
+            margin: -60px auto 40px;
+            background: white;
+            border-radius: 14px;
+            box-shadow: var(--shadow);
+            padding: 26px 28px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .search-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .search-row input {
+            flex: 1;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 16px 18px;
+            font-size: 1rem;
+        }
+
+        .search-row input:focus {
+            outline: none;
+            border-color: var(--red);
+            box-shadow: 0 0 0 3px rgba(196,30,58,0.08);
+        }
+
+        .btn-search {
+            background: var(--red);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 0 26px;
+            font-weight: 700;
+            box-shadow: 0 8px 20px rgba(196,30,58,0.22);
+        }
+
+        .quick-tags {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 18px;
+        }
+
+        .tag {
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            padding: 8px 14px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            background: #fff;
+            color: var(--text);
+            cursor: pointer;
+        }
+
+        .tag:hover {
+            color: var(--red);
+            border-color: rgba(196,30,58,0.35);
+        }
+
+        .container-lg {
+            max-width: 1220px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .featured {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: var(--shadow);
+            margin-bottom: 36px;
+        }
+
+        .section-title {
+            margin: 0 0 20px;
+            color: var(--primary);
             font-size: 1.8rem;
             font-weight: 700;
         }
-        .search-box {
-            border-radius: 30px;
-            padding: 10px 20px;
-            border: 1px solid #ddd;
-            width: 300px;
-            transition: all 0.3s ease;
-        }
-        .search-box:focus {
-            box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
-            border-color: var(--accent-color);
-            outline: none;
-        }
 
-        /* Hero Section */
-        .hero {
-            background: linear-gradient(135deg, var(--primary-color) 0%, #133c6d 100%);
-            color: white;
-            padding: 80px 0;
-            position: relative;
+        .featured-card {
+            display: grid;
+            grid-template-columns: 1.15fr 1fr;
+            background: linear-gradient(135deg, #f8f9fb, #ffffff);
+            border: 1px solid var(--line);
+            border-radius: 18px;
             overflow: hidden;
         }
-        .hero::after {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: url('https://www.transparenttextures.com/patterns/cubes.png');
-            opacity: 0.1;
-        }
-        .hero h1 {
-            font-size: 3.5rem;
-            margin-bottom: 20px;
-            font-weight: 700;
-        }
-        .hero p {
-            font-size: 1.2rem;
-            font-weight: 300;
-            opacity: 0.9;
-        }
 
-        /* Sidebar Categories */
-        .sidebar {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.04);
-            position: sticky;
-            top: 100px;
-        }
-        .cat-link {
+        .featured-image {
+            min-height: 260px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
             display: flex;
             align-items: center;
-            padding: 12px 15px;
-            color: #555;
-            text-decoration: none;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            transition: all 0.3s;
-            font-weight: 500;
-        }
-        .cat-link i {
-            margin-right: 12px;
-            color: var(--accent-color);
-            width: 20px;
-        }
-        .cat-link:hover, .cat-link.active {
-            background-color: var(--primary-color);
-            color: white;
-            transform: translateX(5px);
-        }
-        .cat-link:hover i, .cat-link.active i {
-            color: white;
+            justify-content: center;
+            font-size: 4rem;
         }
 
-        /* News Cards (Glassmorphism & Shadows) */
-        .news-card {
-            background: var(--card-bg);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            border-radius: 15px;
-            padding: 25px;
-            height: 100%;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.03);
-            position: relative;
-            overflow: hidden;
+        .featured-body {
+            padding: 26px;
         }
-        .news-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(11, 37, 69, 0.1);
+
+        .meta {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
         }
-        .news-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; width: 4px; height: 100%;
-            background: var(--accent-color);
-            opacity: 0;
-            transition: 0.3s;
-        }
-        .news-card:hover::before {
-            opacity: 1;
-        }
-        
-        .badge-source {
-            background: var(--primary-color);
-            color: white;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            letter-spacing: 1px;
+
+        .meta span {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
             text-transform: uppercase;
         }
-        .badge-cat {
-            background: #e9ecef;
-            color: #495057;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 500;
-            margin-left: 5px;
+
+        .meta .src {
+            background: var(--primary);
+            color: white;
         }
-        .card-title {
-            font-size: 1.4rem;
-            margin-top: 15px;
-            color: var(--primary-color);
-            line-height: 1.4;
+
+        .meta .cat {
+            background: #f7eecf;
+            color: var(--primary);
         }
-        .card-meta {
-            font-size: 0.85rem;
-            color: #888;
-            margin-bottom: 15px;
+
+        .featured-body h3 {
+            font-size: clamp(1.5rem, 2vw, 2rem);
+            line-height: 1.25;
+            margin: 0 0 10px;
+            color: var(--primary);
+        }
+
+        .featured-body p {
+            color: var(--muted);
+            margin: 0 0 18px;
+        }
+
+        .featured-body .row-meta {
+            color: var(--muted);
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+
+        .article-list {
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+        }
+
+        .article-card {
+            display: flex;
+            gap: 18px;
+            background: white;
+            border: 1px solid var(--line);
+            border-left: 5px solid var(--red);
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(11, 37, 69, 0.04);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            padding: 0;
+        }
+
+        .article-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 16px 28px rgba(11, 37, 69, 0.08);
+        }
+
+        .article-thumb {
+            width: 210px;
+            min-width: 210px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
             display: flex;
             align-items: center;
+            justify-content: center;
+            font-size: 2.4rem;
         }
-        .card-meta i { margin-right: 5px; }
-        .card-text {
-            color: #555;
-            line-height: 1.6;
-            font-size: 0.95rem;
+
+        .article-content {
+            flex: 1;
+            padding: 18px 18px 14px;
         }
-        .btn-read {
-            display: inline-block;
-            margin-top: 15px;
-            color: var(--primary-color);
-            text-decoration: none;
+
+        .article-content h3 {
+            margin: 8px 0 10px;
+            color: var(--primary);
+            font-size: 1.2rem;
+            line-height: 1.35;
+        }
+
+        .article-content p {
+            color: var(--muted);
+            margin: 0 0 12px;
+            font-size: 0.94rem;
+        }
+
+        .article-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--muted);
+            font-size: 0.8rem;
             font-weight: 600;
-            transition: 0.3s;
-            border-bottom: 2px solid transparent;
         }
-        .btn-read:hover {
-            color: var(--accent-color);
-            border-bottom: 2px solid var(--accent-color);
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
         }
-        
-        /* Footer */
-        .footer {
-            background-color: var(--primary-color);
+
+        .side-card {
+            background: white;
+            border-radius: 14px;
+            border: 1px solid var(--line);
+            padding: 22px 20px;
+            box-shadow: 0 8px 24px rgba(11, 37, 69, 0.04);
+        }
+
+        .side-card h4 {
+            margin: 0 0 18px;
+            color: var(--primary);
+            font-size: 1.2rem;
+            font-weight: 800;
+            border-bottom: 3px solid var(--accent);
+            padding-bottom: 10px;
+        }
+
+        .trend-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .trend-item {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            cursor: pointer;
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 12px;
+        }
+
+        .trend-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .trend-no {
+            color: var(--red);
+            font-weight: 800;
+            font-size: 1.1rem;
+            min-width: 20px;
+        }
+
+        .trend-text {
+            color: var(--text);
+            font-weight: 600;
+            line-height: 1.5;
+        }
+
+        .newsletter {
+            background: linear-gradient(135deg, var(--primary), var(--primary-2));
             color: white;
-            padding: 40px 0;
-            margin-top: 60px;
+            border: none;
+        }
+
+        .newsletter h4 {
+            color: white;
+            border-bottom: 3px solid var(--accent);
+        }
+
+        .newsletter p {
+            color: rgba(255,255,255,0.8);
+            margin: 0 0 16px;
+        }
+
+        .newsletter input,
+        .newsletter button {
+            width: 100%;
+            border-radius: 10px;
+            border: none;
+            padding: 12px 14px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .newsletter button {
+            background: var(--accent);
+            color: var(--primary);
+        }
+
+        .quick-links {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .quick-links a {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        footer {
+            background: var(--primary);
+            color: white;
+            padding: 40px 0 20px;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 1.1fr 1fr 1fr 1fr;
+            gap: 26px;
+            margin-bottom: 28px;
+        }
+
+        footer h5 {
+            color: white;
+            font-size: 1rem;
+            margin-bottom: 18px;
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 10px;
+        }
+
+        footer p, footer li, footer a {
+            color: rgba(255,255,255,0.8);
+        }
+
+        footer ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .socials {
+            display: flex;
+            gap: 12px;
+            font-size: 1.2rem;
+        }
+
+        .socials a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255,255,255,0.12);
+            padding-top: 20px;
             text-align: center;
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.7);
+        }
+
+        @media (max-width: 900px) {
+            .featured-card,
+            .layout,
+            .footer-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .article-card {
+                flex-direction: column;
+            }
+
+            .article-thumb {
+                width: 100%;
+                min-width: 100%;
+                height: 200px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .search-row {
+                flex-direction: column;
+            }
+            .btn-search {
+                min-height: 50px;
+            }
+            .hero {
+                padding: 60px 0 90px;
+            }
         }
     </style>
 </head>
 <body>
 
-    <!-- Top Breaking News Bar -->
-    <div class="top-bar d-none d-md-block">
-        <div class="container">
-            <div class="d-flex">
-                <strong class="me-3" style="color: var(--accent-color);"><i class="fas fa-bolt me-1"></i> BREAKING:</strong>
-                <div class="ticker-wrap">
-                    <div class="ticker">
-                        {% if articles %}
-                            {{ articles[0].title }} &nbsp;&nbsp;|&nbsp;&nbsp; {{ articles[1].title if articles|length > 1 else '' }}
-                        {% else %}
-                            System is currently analyzing latest legal documents using AI...
-                        {% endif %}
-                    </div>
-                </div>
+<nav class="navbar navbar-expand-lg">
+    <div class="container-lg">
+        <a class="navbar-brand brand" href="/">
+            <i class="fas fa-balance-scale"></i>Lawgic
+            <small>Legal News & Research</small>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu" aria-controls="navMenu" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navMenu">
+            <div class="ms-auto d-flex align-items-center flex-wrap">
+                <a class="nav-link" href="/"><i class="fas fa-newspaper"></i>News</a>
+                <a class="nav-link" href="/bare-acts"><i class="fas fa-book"></i>Bare Acts</a>
+                <a class="nav-link" href="/ai-search"><i class="fas fa-robot"></i>AI Research</a>
             </div>
         </div>
     </div>
+</nav>
 
-    <!-- Main Navbar -->
-    <nav class="navbar navbar-expand-lg sticky-top">
-        <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="/">
-                <img src="/static/images/logo.jpg" alt="Logo">
-                Lawgic
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            
-            <div class="collapse navbar-collapse" id="navContent">
-                <ul class="navbar-nav ms-auto me-3">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/" style="font-weight: 600;">News</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/bare-acts" style="font-weight: 600;">Bare Acts</a>
-                    </li>
-                </ul>
-                <form class="d-flex" action="/" method="GET">
-                    <div class="position-relative">
-                        <input type="text" name="q" class="search-box" placeholder="Search verdicts, laws, judges..." value="{{ query or '' }}">
-                        <button type="submit" style="position:absolute; right:15px; top:10px; background:none; border:none; color:#888;">
-                            <i class="fas fa-search"></i>
-                        </button>
-                    </div>
-                </form>
-            </div>
+<div class="ticker">
+    <div class="container-lg">
+        <div class="ticker-inner">
+            <span class="label">Breaking</span>
+            {% if articles %}
+                {% for article in articles[:5] %}
+                    <span>{{ article.title|truncate(80) }}</span>
+                    <span style="margin-left: 24px;">•</span>
+                {% endfor %}
+            {% else %}
+                <span>Latest legal updates from India</span>
+            {% endif %}
         </div>
-    </nav>
+    </div>
+</div>
 
-    <!-- Hero Section -->
-    <div class="hero">
-        <div class="container position-relative" style="z-index: 1;">
-            <div class="row align-items-center">
-                <div class="col-lg-8" data-aos="fade-up" data-aos-duration="1000">
-                    <h1>Unbiased Legal Intelligence.</h1>
-                    <p>Powered by Advanced AI. We analyze and summarize real-time judgments from the Supreme Court and High Courts of India so you never miss a critical legal update.</p>
-                    <div class="mt-4" style="font-family: 'Playfair Display', serif; font-style: italic; font-size: 1.1rem; color: var(--accent-color);">
-                        Founder & Editor-in-Chief: <strong>Nikhil Vyas</strong>
-                    </div>
-                </div>
-            </div>
+<header class="hero">
+    <div class="container-lg">
+        <h1>⚖️ Legal Intelligence</h1>
+        <p>Latest Indian legal news, insights & AI-powered research</p>
+    </div>
+</header>
+
+<div class="container-lg">
+    <div class="search-shell">
+        <form method="get" action="/" class="search-row">
+            <input type="text" name="q" value="{{ query or '' }}" placeholder="Search legal news, judgments, and updates...">
+            <button type="submit" class="btn-search">Search</button>
+        </form>
+
+        <div class="quick-tags">
+            <button class="tag" type="button" onclick="window.location.href='/?category=Supreme+Court'">Supreme Court</button>
+            <button class="tag" type="button" onclick="window.location.href='/?category=High+Court'">High Courts</button>
+            <button class="tag" type="button" onclick="window.location.href='/?category=Parliament'">Parliament</button>
+            <button class="tag" type="button" onclick="window.location.href='/?category=Opinion'">Opinion</button>
         </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="container mt-5">
-        <div class="row">
-            
-            <!-- Sidebar -->
-            <div class="col-lg-3 mb-4" data-aos="fade-right" data-aos-duration="800">
-                <div class="sidebar">
-                    <h5 class="mb-4" style="color: var(--primary-color); font-weight: 700;">Topics</h5>
-                    
-                    <a href="/" class="cat-link {% if not current_cat %}active{% endif %}">
-                        <i class="fas fa-globe"></i> All Updates
-                    </a>
-                    
-                    {% set icons = {'Supreme Court': 'fa-landmark', 'High Court': 'fa-building-columns', 'Criminal Law': 'fa-gavel', 'Corporate Law': 'fa-briefcase', 'Constitutional Law': 'fa-book'} %}
-                    
-                    {% for cat in categories %}
-                    <a href="/?category={{ cat }}" class="cat-link {% if current_cat == cat %}active{% endif %}">
-                        <i class="fas {{ icons.get(cat, 'fa-scale-balanced') }}"></i> {{ cat }}
-                    </a>
-                    {% endfor %}
+    {% if articles %}
+    <section class="featured">
+        <h2 class="section-title">Featured</h2>
+        <a href="/article/{{ articles[0].id }}" class="featured-card">
+            <div class="featured-image">
+                <i class="fas fa-gavel"></i>
+            </div>
+            <div class="featured-body">
+                <div class="meta">
+                    <span class="src">{{ articles[0].source }}</span>
+                    {% if articles[0].category %}
+                    <span class="cat">{{ articles[0].category }}</span>
+                    {% endif %}
+                </div>
+                <h3>{{ articles[0].title }}</h3>
+                <p>{{ articles[0].summary|striptags|truncate(180) }}</p>
+                <div class="row-meta">
+                    {% if articles[0].published_date %}
+                        {{ articles[0].published_date.strftime('%b %d, %Y') }}
+                    {% else %}
+                        Today
+                    {% endif %}
+                    • 5 min read
                 </div>
             </div>
+        </a>
+    </section>
+    {% endif %}
 
-            <!-- News Feed -->
-            <div class="col-lg-9">
-                
-                <div class="d-flex justify-content-between align-items-center mb-4" data-aos="fade-in">
-                    <h3 style="color: var(--primary-color); font-weight: 700;">
-                        {% if query %} Results for "{{ query }}"
-                        {% elif current_cat %} {{ current_cat }}
-                        {% else %} Latest AI-Analyzed Verdicts {% endif %}
-                    </h3>
-                </div>
-
-                <div class="row">
-                    {% for article in articles %}
-                    <div class="col-md-12 mb-4" data-aos="fade-up" data-aos-duration="800" data-aos-delay="{{ loop.index0 % 10 * 100 }}">
-                        <div class="news-card p-0" style="display: flex; flex-direction: row; align-items: stretch;">
-                            <!-- Image Section -->
-                            <div style="flex: 0 0 35%; overflow: hidden; border-top-left-radius: 15px; border-bottom-left-radius: 15px;">
-                                {% if article.image_url %}
-                                    <img src="{{ article.image_url }}" alt="News Image" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+    <section class="layout">
+        <div class="article-list">
+            {% if articles %}
+                {% for article in articles[1:40] %}
+                <a href="/article/{{ article.id }}" class="article-card">
+                    <div class="article-thumb">
+                        <i class="fas fa-file-contract"></i>
+                    </div>
+                    <div class="article-content">
+                        <div class="meta">
+                            <span class="src">{{ article.source }}</span>
+                            {% if article.category %}
+                            <span class="cat">{{ article.category }}</span>
+                            {% endif %}
+                        </div>
+                        <h3>{{ article.title }}</h3>
+                        <p>{{ article.summary|striptags|truncate(120) }}</p>
+                        <div class="article-footer">
+                            <span>
+                                {% if article.published_date %}
+                                    {{ article.published_date.strftime('%b %d, %Y') }}
                                 {% else %}
-                                    <img src="https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=800" alt="Legal Default" style="width: 100%; height: 100%; object-fit: cover; filter: grayscale(20%);">
+                                    Today
                                 {% endif %}
-                            </div>
-                            
-                            <!-- Content Section -->
-                            <div style="flex: 1; padding: 25px;">
-                                <div class="d-flex align-items-center mb-2">
-                                    <span class="badge-source">{{ article.source }}</span>
-                                    <span class="badge-cat">{{ article.category }}</span>
-                                </div>
-                                <h4 class="card-title" style="font-size: 1.3rem;">{{ article.title }}</h4>
-                                <div class="card-meta">
-                                    <span><i class="far fa-calendar-alt"></i> {{ article.published_date.strftime('%B %d, %Y') }}</span>
-                                    <span class="ms-3" style="color: var(--accent-color);"><i class="fas fa-robot"></i> AI Verified</span>
-                                </div>
-                                <p class="card-text">{{ article.summary[:200] }}...</p>
-                                <a href="/article/{{ article.id }}" class="btn-read">Read News Detail <i class="fas fa-arrow-right ms-1"></i></a>
-                            </div>
+                            </span>
+                            <span><i class="fas fa-clock"></i> 4 min</span>
                         </div>
                     </div>
-                    {% else %}
-                    <div class="col-12 text-center py-5">
-                        <i class="fas fa-hourglass-half fa-3x mb-3" style="color: #ccc;"></i>
-                        <h4>Our AI is currently processing new legal feeds...</h4>
-                        <p class="text-muted">Please refresh the page in a moment.</p>
-                    </div>
-                    {% endfor %}
+                </a>
+                {% endfor %}
+            {% else %}
+                <div class="side-card" style="text-align:center; padding:60px 20px;">
+                    <i class="fas fa-inbox" style="font-size:3rem;color:#d0d5dd;margin-bottom:16px;display:block;"></i>
+                    <p style="color: var(--muted); margin:0;">No articles found yet. Check back soon.</p>
                 </div>
+            {% endif %}
+        </div>
 
+        <aside class="sidebar">
+            <div class="side-card">
+                <h4>Trending Now</h4>
+                <div class="trend-list">
+                    {% if articles %}
+                        {% for article in articles[:5] %}
+                        <div class="trend-item" onclick="location.href='/article/{{ article.id }}'">
+                            <div class="trend-no">{{ loop.index }}</div>
+                            <div class="trend-text">{{ article.title|truncate(60) }}</div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p style="color: var(--muted); margin:0;">No trending stories right now.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="side-card newsletter">
+                <h4>Newsletter</h4>
+                <p>Get daily legal updates in your inbox.</p>
+                <input type="email" placeholder="Enter your email">
+                <button type="button">Subscribe</button>
+            </div>
+
+            <div class="side-card">
+                <h4>Quick Links</h4>
+                <ul class="quick-links">
+                    <li><a href="/bare-acts"><i class="fas fa-book"></i> Bare Acts</a></li>
+                    <li><a href="/ai-search"><i class="fas fa-robot"></i> AI Search</a></li>
+                    <li><a href="#"><i class="fas fa-gavel"></i> Supreme Court</a></li>
+                    <li><a href="#"><i class="fas fa-landmark"></i> High Courts</a></li>
+                    <li><a href="#"><i class="fas fa-balance-scale"></i> Parliament News</a></li>
+                </ul>
+            </div>
+        </aside>
+    </section>
+</div>
+
+<footer>
+    <div class="container-lg">
+        <div class="footer-grid">
+            <div>
+                <h5>About Lawgic</h5>
+                <p>India’s legal news and AI-enabled research platform built for faster, clearer access to legal information.</p>
+            </div>
+
+            <div>
+                <h5>Quick Links</h5>
+                <ul>
+                    <li><a href="/">News</a></li>
+                    <li><a href="/bare-acts">Bare Acts</a></li>
+                    <li><a href="/ai-search">AI Research</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h5>Follow</h5>
+                <div class="socials">
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-linkedin"></i></a>
+                    <a href="#"><i class="fab fa-facebook"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+
+            <div>
+                <h5>Contact</h5>
+                <p>info@lawgic.com</p>
+                <p>+91-XXXXXXXXXX</p>
             </div>
         </div>
-    </div>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <h3 style="color: var(--accent-color);">Lawgic</h3>
-            <p class="mb-1">© 2026 Lawgic. Automated Legal Intelligence.</p>
-            <p class="mb-0" style="font-size: 0.9rem; opacity: 0.8;">Founded by <strong>Nikhil Vyas</strong></p>
+        <div class="footer-bottom">
+            © 2024 Lawgic. Created by <a href="https://github.com/inikhilvyas">Nikhil Vyas</a> | Disclaimer: general legal information only, not legal advice.
         </div>
-    </footer>
+    </div>
+</footer>
 
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-    <script>
-        // Initialize Animations
-        AOS.init({
-            once: true,
-            offset: 50
-        });
-    </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
