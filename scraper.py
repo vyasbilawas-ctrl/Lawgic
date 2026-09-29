@@ -55,7 +55,10 @@ def rewrite_with_gemini(title, summary):
     try:
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel(os.getenv("GEMINI_SCRAPER_MODEL", "gemini-1.5-flash"))
-        response = model.generate_content(f"Rewrite objectively. Return exactly TITLE: and SUMMARY: lines.\nTITLE: {title}\nSUMMARY: {summary}")
+        prompt = f"""Rewrite this into a proper news format. If it is a raw court case (like from Indian Kanoon), give it a short catchy news heading (TITLE) and a clear, brief news summary of the case (SUMMARY). Return exactly TITLE: and SUMMARY: lines.
+TITLE: {title}
+SUMMARY: {summary}"""
+        response = model.generate_content(prompt)
         new_title, new_summary = title, summary
         for line in getattr(response, "text", "").splitlines():
             if line.startswith("TITLE:"): new_title = line[6:].strip()
