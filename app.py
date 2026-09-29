@@ -1,7 +1,7 @@
 import os
+import atexit
 from datetime import datetime, timedelta
 
-import atexit
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, jsonify, render_template, request
 from sqlalchemy import or_, text
@@ -10,7 +10,6 @@ from database import Article, Session
 from scraper import fetch_and_store_news
 
 app = Flask(__name__)
-
 scheduler = BackgroundScheduler(timezone="UTC")
 
 
@@ -18,63 +17,34 @@ def env_bool(name, default=False):
     return os.getenv(name, str(default)).strip().lower() in {"1", "true", "yes", "on"}
 
 
-def fetch_interval_minutes():
-    try:
-        return max(5, int(os.getenv("NEWS_FETCH_MINUTES", "60")))
-    except ValueError:
-        app.logger.warning("Invalid NEWS_FETCH_MINUTES; using 60 minutes")
-        return 60
-
-
 def start_scheduler():
-    """Start the optional in-process scheduler once per web process."""
     if scheduler.running or not env_bool("ENABLE_SCHEDULER", False):
         return
-
-    try:
-        scheduler.add_job(
-            fetch_and_store_news,
-            trigger="date",
-            run_date=datetime.utcnow() + timedelta(seconds=10),
-            id="initial-news-fetch",
-            replace_existing=True,
-            misfire_grace_time=300,
-        )
-        scheduler.add_job(
-            fetch_and_store_news,
-            trigger="interval",
-            minutes=fetch_interval_minutes(),
-            id="news-fetch",
-            replace_existing=True,
-            coalesce=True,
-            max_instances=1,
-            misfire_grace_time=900,
-        )
-        scheduler.start()
-    except Exception as e:
-        app.logger.error(f"Failed to start scheduler: {e}")
+    scheduler.add_job(fetch_and_store_news, "date", run_date=datetime.utcnow() + timedelta(seconds=10), id="initial-fetch", replace_existing=True)
+    scheduler.add_job(fetch_and_store_news, "interval", minutes=max(5, int(os.getenv("NEWS_FETCH_MINUTES", "60"))), id="news-fetch", replace_existing=True, coalesce=True, max_instances=1)
+    scheduler.start()
 
 
-start_scheduler()
+try:
+    start_scheduler()
+except Exception:
+    app.logger.exception("Unable to start scheduler")
 
 
 def shutdown_scheduler():
     if scheduler.running:
-        try:
-            scheduler.shutdown(wait=False)
-        except Exception as e:
-            app.logger.error(f"Error shutting down scheduler: {e}")
+        scheduler.shutdown(wait=False)
 
 
 atexit.register(shutdown_scheduler)
 
 
-def clean_text(value, max_length=500):
-    return str(value or "").strip()[:max_length]
+def clean_text(value, limit=2000):
+    return str(value or "").strip()[:limit]
 
 
 @app.after_request
-def add_security_headers(response):
+def security_headers(response):
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
     response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
     response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
@@ -85,33 +55,17 @@ def add_security_headers(response):
 def index():
     session = Session()
     try:
-        category_filter = clean_text(request.args.get("category"), 100)
-        search_query = clean_text(request.args.get("q"))
+        category = clean_text(request.args.get("category"), 100)
+        search = clean_text(request.args.get("q"), 200)
         query = session.query(Article)
-        if category_filter:
-            query = query.filter(Article.category == category_filter)
-        if search_query:
-            term = f"%{search_query}%"
+        if category:
+            query = query.filter(Article.category == category)
+        if search:
+            term = f"%{search}%"
             query = query.filter(or_(Article.title.ilike(term), Article.summary.ilike(term)))
         articles = query.order_by(Article.published_date.desc()).limit(50).all()
-        categories = [
-            row[0]
-            for row in session.query(Article.category)
-            .filter(Article.category.isnot(None))
-            .distinct()
-            .order_by(Article.category)
-            .all()
-        ]
-        return render_template(
-            "index.html",
-            articles=articles,
-            categories=categories,
-            current_cat=category_filter,
-            query=search_query,
-        )
-    except Exception as e:
-        app.logger.error(f"Error in index: {e}")
-        return render_template("error.html", error="Unable to load articles"), 500
+        categories = [row[0] for row in session.query(Article.category).filter(Article.category.isnot(None)).distinct().order_by(Article.category).all()]
+        return render_template("index.html", articles=articles, categories=categories, current_cat=category, query=search)
     finally:
         session.close()
 
@@ -131,9 +85,7 @@ def health():
     session = Session()
     try:
         session.execute(text("SELECT 1"))
-        return jsonify({"status": "ok", "scheduler": "running" if scheduler.running else "stopped"})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 503
+        return jsonify({"status": "ok", "scheduler": scheduler.running})
     finally:
         session.close()
 
@@ -142,37 +94,27 @@ def health():
 def ask_ai():
     data = request.get_json(silent=True) or {}
     query = clean_text(data.get("query"), 2000)
+    language = "Hindi" if str(data.get("language", "English")).lower().startswith("hi") else "English"
     if not query:
         return jsonify({"error": "Please enter a legal question."}), 400
-
     api_key = os.getenv("GEMINI_SEARCH_API_KEY") or os.getenv("GEMINI_API_KEY")
     if not api_key:
         return jsonify({"error": "AI service is not configured. Please add GEMINI_API_KEY."}), 503
-
     try:
         import bleach
         import google.generativeai as genai
-
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel(os.getenv("GEMINI_MODEL", "gemini-2.5-pro"))
-        prompt = f"""You are Lawgic's careful Indian legal research assistant.
-Answer this question: {query}
-
-Give a clear, neutral answer based on Indian law. Use only these HTML tags: <p>, <br>, <strong>, <ul>, <ol>, <li>.
-Explain that this is general information, not legal advice. Do not invent citations. If uncertain, say so.
-At the end, list 2-4 relevant real judgments only when you are confident they are relevant, with the case name and one-sentence holding."""
+        prompt = f"""You are Lawgic's careful Indian legal research assistant. Answer in {language}.
+Question: {query}
+Give a clear, neutral answer based on Indian law. Use only <p>, <br>, <strong>, <ul>, <ol>, and <li> tags. Explain that this is general information, not legal advice. Do not invent citations. If uncertain, say so. At the end, list 2-4 relevant real judgments only when confident, with case name and one-sentence holding."""
         response = model.generate_content(prompt, request_options={"timeout": 120})
         answer = getattr(response, "text", "").strip()
         if not answer:
-            raise ValueError("The AI returned an empty response")
-        answer = bleach.clean(
-            answer,
-            tags=["p", "br", "strong", "ul", "ol", "li"],
-            attributes={},
-            strip=True,
-        )
+            raise ValueError("Empty AI response")
+        answer = bleach.clean(answer, tags=["p", "br", "strong", "ul", "ol", "li"], attributes={}, strip=True)
         return jsonify({"response": answer})
-    except Exception as e:
+    except Exception:
         app.logger.exception("AI request failed")
         return jsonify({"error": "Unable to process the request right now. Please try again."}), 502
 
@@ -185,9 +127,6 @@ def article_page(id):
         if not article:
             return render_template("404.html"), 404
         return render_template("article.html", article=article)
-    except Exception as e:
-        app.logger.error(f"Error loading article {id}: {e}")
-        return render_template("error.html", error="Unable to load article"), 500
     finally:
         session.close()
 
@@ -197,14 +136,5 @@ def not_found(_error):
     return render_template("404.html"), 404
 
 
-@app.errorhandler(500)
-def server_error(_error):
-    return render_template("error.html", error="Internal server error"), 500
-
-
 if __name__ == "__main__":
-    app.run(
-        host="0.0.0.0",
-        port=int(os.getenv("PORT", "5000")),
-        debug=env_bool("FLASK_DEBUG", False),
-    )
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", "5000")), debug=env_bool("FLASK_DEBUG", False))
