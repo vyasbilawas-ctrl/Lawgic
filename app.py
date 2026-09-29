@@ -117,6 +117,5 @@ def article_page(id):
 
 
 if __name__ == '__main__':
-    # Initial fetch before running
-    fetch_and_store_news()
-    app.run(debug=True, use_reloader=False)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=True, use_reloader=False)
