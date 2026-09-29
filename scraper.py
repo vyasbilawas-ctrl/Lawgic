@@ -1,134 +1,96 @@
 import os
-import requests
+from datetime import datetime
+
+from bs4 import BeautifulSoup
+from dateutil import parser as date_parser
+from dotenv import load_dotenv
 import feedparser
 import google.generativeai as genai
-from datetime import datetime
-from database import Session, Article
-from bs4 import BeautifulSoup
-from dotenv import load_dotenv
+import requests
 
-# Load environment variables
+from database import Article, Session
+
 load_dotenv()
 
-# Setup Gemini API (it will use GEMINI_API_KEY from .env)
-genai.configure(api_key=os.environ.get("GEMINI_API_KEY", ""))
-
 RSS_FEEDS = {
-    'Bar and Bench': 'https://www.barandbench.com/feed',
-    'Verdictum': 'https://www.verdictum.in/feed',
-    'Indian Kanoon SC': 'https://indiankanoon.org/feeds/latest/supremecourt/'
+    "Bar and Bench": "https://www.barandbench.com/feed",
+    "Verdictum": "https://www.verdictum.in/feed",
+    "Indian Kanoon SC": "https://indiankanoon.org/feeds/latest/supremecourt/",
 }
+USER_AGENT = "Lawgic/1.0 (+https://github.com/vyasbilawas-ctrl/Lawgic)"
 
-def parse_date(date_str):
+
+def parse_date(value):
     try:
-        from dateutil import parser
-        return parser.parse(date_str)
-    except:
-        return datetime.now()
+        return date_parser.parse(value).replace(tzinfo=None) if value else datetime.utcnow()
+    except (TypeError, ValueError, OverflowError):
+        return datetime.utcnow()
+
 
 def determine_category(title, summary):
-    text = (title + " " + summary).lower()
-    if 'supreme court' in text or 'cji' in text or 'sc ' in text:
+    text = f"{title} {summary}".lower()
+    if any(word in text for word in ("supreme court", "cji", "sc judgment")):
         return "Supreme Court"
-    elif 'high court' in text or ' hc ' in text:
+    if any(word in text for word in ("high court", " hc ")):
         return "High Court"
-    elif 'murder' in text or 'rape' in text or 'bail' in text or 'criminal' in text or 'police' in text:
+    if any(word in text for word in ("murder", "rape", "bail", "criminal", "police", "fir")):
         return "Criminal Law"
-    elif 'tax' in text or 'corporate' in text or 'company' in text or 'business' in text or 'cci' in text or 'sebi' in text:
+    if any(word in text for word in ("tax", "corporate", "company", "business", "cci", "sebi")):
         return "Corporate Law"
-    elif 'constitution' in text or 'fundamental rights' in text or 'article' in text:
+    if any(word in text for word in ("constitution", "fundamental right", "article 14", "article 21")):
         return "Constitutional Law"
     return "General News"
 
+
 def rewrite_with_gemini(title, summary):
-    # If no API key, return original text
-    if not os.environ.get("GEMINI_API_KEY"):
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
         return title, summary
-        
     try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        prompt = f"""
-        You are an expert legal journalist. Please rewrite the following news title and summary to make it completely unique, engaging, and professional. 
-        Do not change the factual meaning or the verdict. Keep it objective. Avoid plagiarism.
-        
-        Original Title: {title}
-        Original Summary: {summary}
-        
-        Format your response exactly as:
-        TITLE: [Your new title]
-        SUMMARY: [Your new summary, around 3-4 sentences]
-        """
-        response = model.generate_content(prompt)
-        text = response.text
-        
-        # Parse the response
-        new_title = title
-        new_summary = summary
-        
-        for line in text.split('\n'):
-            if line.startswith('TITLE:'):
-                new_title = line.replace('TITLE:', '').strip()
-            elif line.startswith('SUMMARY:'):
-                new_summary = line.replace('SUMMARY:', '').strip()
-                
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel(os.getenv("GEMINI_SCRAPER_MODEL", "gemini-1.5-flash"))
+        response = model.generate_content(
+            f"Rewrite this Indian legal news objectively without changing facts. Return exactly two lines: TITLE: ... and SUMMARY: ...\nTITLE: {title}\nSUMMARY: {summary}"
+        )
+        new_title, new_summary = title, summary
+        for line in getattr(response, "text", "").splitlines():
+            if line.startswith("TITLE:"):
+                new_title = line[6:].strip()[:500] or title
+            elif line.startswith("SUMMARY:"):
+                new_summary = line[8:].strip()[:4000] or summary
         return new_title, new_summary
-    except Exception as e:
-        print(f"Gemini API Error: {e}")
+    except Exception:
         return title, summary
+
 
 def fetch_and_store_news():
     session = Session()
-    print(f"[{datetime.now()}] Starting news fetch...")
-    
-    for source, url in RSS_FEEDS.items():
-        print(f"Fetching from {source}...")
-        try:
-            headers = {'User-Agent': 'Mozilla/5.0'}
-            response = requests.get(url, headers=headers)
-            feed = feedparser.parse(response.content)
-            
-            import time
-            for entry in feed.entries:
-                link = entry.get('link', '')
-                existing = session.query(Article).filter_by(link=link).first()
-                if not existing:
-                    original_title = entry.get('title', '')
-                    summary_html = entry.get('summary', '')
-                    soup = BeautifulSoup(summary_html, 'html.parser')
-                    
-                    # Extract image URL
-                    image_url = ""
-                    if 'media_content' in entry and len(entry.media_content) > 0:
-                        image_url = entry.media_content[0].get('url', '')
-                    
-                    original_summary = soup.get_text()[:500] + '...'
-                    
-                    # REWRITE CONTENT USING AI
-                    title, summary_text = rewrite_with_gemini(original_title, original_summary)
-                    time.sleep(4) # Respect Gemini API 15 RPM Rate Limit
-                    
-                    category = determine_category(title, summary_text)
-                    
-                    published_str = entry.get('published', '')
-                    pub_date = parse_date(published_str)
-                    
-                    article = Article(
-                        title=title,
-                        link=link,
-                        summary=summary_text,
-                        image_url=image_url,
-                        published_date=pub_date,
-                        source=source,
-                        category=category
-                    )
-                    session.add(article)
-                    session.commit()
-            print(f"Finished fetching from {source}.")
-        except Exception as e:
-            print(f"Error fetching from {source}: {e}")
-            session.rollback()
-    
-    session.close()
+    total = 0
+    try:
+        for source, url in RSS_FEEDS.items():
+            try:
+                response = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=20)
+                response.raise_for_status()
+                feed = feedparser.parse(response.content)
+                for entry in feed.entries[:50]:
+                    link = (entry.get("link") or "").strip()
+                    title = (entry.get("title") or "Untitled legal update").strip()
+                    if not link or session.query(Article.id).filter_by(link=link).first():
+                        continue
+                    text = BeautifulSoup(entry.get("summary", ""), "html.parser").get_text(" ", strip=True)
+                    summary = (text[:997] + "...") if len(text) > 1000 else (text or "No summary available.")
+                    title, summary = rewrite_with_gemini(title, summary)
+                    media = entry.get("media_content") or []
+                    image_url = media[0].get("url", "") if media else ""
+                    session.add(Article(title=title[:500], link=link[:1000], summary=summary, image_url=image_url[:1000], published_date=parse_date(entry.get("published") or entry.get("updated")), source=source, category=determine_category(title, summary)))
+                    total += 1
+                session.commit()
+            except Exception:
+                session.rollback()
+        return total
+    finally:
+        session.close()
 
-if __name__ == '__main__':
-    fetch_and_store_news()
+
+if __name__ == "__main__":
+    print(f"Stored {fetch_and_store_news()} new articles")

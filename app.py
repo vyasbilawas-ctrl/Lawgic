@@ -1,121 +1,151 @@
-from flask import Flask, render_template, request, jsonify
-from database import Session, Article
-from scraper import fetch_and_store_news
-from apscheduler.schedulers.background import BackgroundScheduler
-from datetime import datetime, timedelta
 import atexit
+import os
+from datetime import datetime, timedelta
+
+from apscheduler.schedulers.background import BackgroundScheduler
+from flask import Flask, jsonify, render_template, request
 from sqlalchemy import or_
 
-app = Flask(__name__)
+from database import Article, Session
+from scraper import fetch_and_store_news
 
-scheduler = BackgroundScheduler()
+app = Flask(__name__)
+app.config["JSON_SORT_KEYS"] = False
+
+scheduler = BackgroundScheduler(timezone="UTC")
 
 
 def start_scheduler():
-    if scheduler.running:
+    """Start one safe scheduler instance for deployments that enable it."""
+    if scheduler.running or os.getenv("ENABLE_SCHEDULER", "true").lower() not in {"1", "true", "yes"}:
         return
 
-    # Run once shortly after startup, then continue every hour.
-    # The previous version used a bare `trigger="date"` without `run_date`,
-    # which causes APScheduler to fail during app startup.
     scheduler.add_job(
-        func=fetch_and_store_news,
+        fetch_and_store_news,
         trigger="date",
-        run_date=datetime.now() + timedelta(seconds=5),
+        run_date=datetime.utcnow() + timedelta(seconds=10),
+        id="initial-news-fetch",
+        replace_existing=True,
+        misfire_grace_time=300,
     )
     scheduler.add_job(
-        func=fetch_and_store_news,
+        fetch_and_store_news,
         trigger="interval",
-        hours=1,
+        minutes=int(os.getenv("NEWS_FETCH_MINUTES", "60")),
+        id="hourly-news-fetch",
+        replace_existing=True,
+        coalesce=True,
+        max_instances=1,
+        misfire_grace_time=900,
     )
     scheduler.start()
 
 
 start_scheduler()
-atexit.register(lambda: scheduler.shutdown())
+atexit.register(lambda: scheduler.shutdown(wait=False) if scheduler.running else None)
 
 
-@app.route('/')
+def get_clean_query(value, max_length=500):
+    return (value or "").strip()[:max_length]
+
+
+@app.after_request
+def add_security_headers(response):
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    return response
+
+
+@app.route("/")
 def index():
     session = Session()
-    category_filter = request.args.get('category')
-    search_query = request.args.get('q')
-
-    query = session.query(Article)
-
-    if category_filter:
-        query = query.filter(Article.category == category_filter)
-    if search_query:
-        query = query.filter(or_(Article.title.ilike(f'%{search_query}%'), Article.summary.ilike(f'%{search_query}%')))
-
-    articles = query.order_by(Article.published_date.desc()).limit(50).all()
-
-    # Get unique categories for sidebar
-    categories = [cat[0] for cat in session.query(Article.category).distinct().all()]
-
-    session.close()
-    return render_template('index.html', articles=articles, categories=categories, current_cat=category_filter, query=search_query)
+    try:
+        category_filter = get_clean_query(request.args.get("category"), 100)
+        search_query = get_clean_query(request.args.get("q"))
+        query = session.query(Article)
+        if category_filter:
+            query = query.filter(Article.category == category_filter)
+        if search_query:
+            term = f"%{search_query}%"
+            query = query.filter(or_(Article.title.ilike(term), Article.summary.ilike(term)))
+        articles = query.order_by(Article.published_date.desc()).limit(50).all()
+        categories = [row[0] for row in session.query(Article.category).filter(Article.category.isnot(None)).distinct().order_by(Article.category).all()]
+        return render_template("index.html", articles=articles, categories=categories, current_cat=category_filter, query=search_query)
+    finally:
+        session.close()
 
 
-@app.route('/bare-acts')
+@app.route("/bare-acts")
 def bare_acts():
-    return render_template('bare_acts.html')
+    return render_template("bare_acts.html")
 
 
-@app.route('/ai-search')
+@app.route("/ai-search")
 def ai_search():
-    return render_template('ai_search.html')
+    return render_template("ai_search.html")
 
 
-@app.route('/api/ask-ai', methods=['POST'])
+@app.route("/health")
+def health():
+    session = Session()
+    try:
+        session.execute(__import__("sqlalchemy").text("SELECT 1"))
+        return jsonify({"status": "ok"})
+    finally:
+        session.close()
+
+
+@app.route("/api/ask-ai", methods=["POST"])
 def ask_ai():
     data = request.get_json(silent=True) or {}
-    query = data.get('query', '')
-
+    query = get_clean_query(data.get("query"), 2000)
     if not query:
-        return jsonify({'error': 'Query is empty'}), 400
+        return jsonify({"error": "Please enter a legal question."}), 400
+
+    api_key = os.getenv("GEMINI_SEARCH_API_KEY") or os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        return jsonify({"error": "AI service is not configured. Please add GEMINI_API_KEY."}), 503
 
     try:
+        import bleach
         import google.generativeai as genai
-        import os
 
-        # Use a separate key for search if available, to avoid rate limits from the scraper
-        search_api_key = os.environ.get("GEMINI_SEARCH_API_KEY", "") or os.environ.get("GEMINI_API_KEY", "")
-        if not search_api_key:
-            return jsonify({'error': 'Gemini API key is not configured'}), 500
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel(os.getenv("GEMINI_MODEL", "gemini-2.5-pro"))
+        prompt = f"""You are Lawgic's careful Indian legal research assistant.
+Answer this question: {query}
 
-        genai.configure(api_key=search_api_key)
-        model = genai.GenerativeModel('gemini-2.5-pro')
-
-        prompt = f"""
-        You are an expert Indian Legal AI Assistant on the Lawgic platform.
-        A user has asked the following legal query: "{query}"
-
-        Please provide a comprehensive but easy-to-understand answer based on Indian Law.
-        Structure your answer using HTML tags (<br>, <b>, <ul>, <li>) for formatting.
-        Do not use markdown like **bold**, use HTML <b>bold</b> instead.
-
-        Crucially, at the end of your answer, you MUST provide a list of 2-4 real, landmark Indian Supreme Court or High Court judgments relevant to this query.
-        For each judgment, provide the case name and a 1-sentence summary of what was held.
-        """
-
+Give a clear, neutral answer based on Indian law. Use only these HTML tags: <p>, <br>, <strong>, <ul>, <ol>, <li>.
+Explain that this is general information, not legal advice. Do not invent citations. If uncertain, say so.
+At the end, list 2-4 relevant real judgments only when you are confident they are relevant, with the case name and one-sentence holding."""
         response = model.generate_content(prompt)
-        return jsonify({'response': response.text})
-    except Exception as e:
-        print("AI Error:", e)
-        return jsonify({'error': 'Failed to process request. Please try again later.'}), 500
+        answer = getattr(response, "text", "").strip()
+        if not answer:
+            raise ValueError("The AI returned an empty response")
+        answer = bleach.clean(answer, tags=["p", "br", "strong", "ul", "ol", "li"], attributes={}, strip=True)
+        return jsonify({"response": answer})
+    except Exception as exc:
+        app.logger.exception("AI request failed: %s", exc)
+        return jsonify({"error": "Unable to process the request right now. Please try again."}), 502
 
 
-@app.route('/article/<int:id>')
+@app.route("/article/<int:id>")
 def article_page(id):
     session = Session()
-    article = session.query(Article).filter_by(id=id).first()
-    session.close()
-    if article:
-        return render_template('article.html', article=article)
-    return "Article not found", 404
+    try:
+        article = session.query(Article).filter_by(id=id).first()
+        if not article:
+            return render_template("404.html"), 404
+        return render_template("article.html", article=article)
+    finally:
+        session.close()
 
 
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=True, use_reloader=False)
+@app.errorhandler(404)
+def not_found(_error):
+    return render_template("404.html"), 404
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", "5000")), debug=os.getenv("FLASK_DEBUG", "false").lower() == "true")
