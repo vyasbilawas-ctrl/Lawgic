@@ -1,7 +1,7 @@
-import atexit
 import os
 from datetime import datetime, timedelta
 
+import atexit
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, jsonify, render_template, request
 from sqlalchemy import or_, text
@@ -31,29 +31,42 @@ def start_scheduler():
     if scheduler.running or not env_bool("ENABLE_SCHEDULER", False):
         return
 
-    scheduler.add_job(
-        fetch_and_store_news,
-        trigger="date",
-        run_date=datetime.utcnow() + timedelta(seconds=10),
-        id="initial-news-fetch",
-        replace_existing=True,
-        misfire_grace_time=300,
-    )
-    scheduler.add_job(
-        fetch_and_store_news,
-        trigger="interval",
-        minutes=fetch_interval_minutes(),
-        id="news-fetch",
-        replace_existing=True,
-        coalesce=True,
-        max_instances=1,
-        misfire_grace_time=900,
-    )
-    scheduler.start()
+    try:
+        scheduler.add_job(
+            fetch_and_store_news,
+            trigger="date",
+            run_date=datetime.utcnow() + timedelta(seconds=10),
+            id="initial-news-fetch",
+            replace_existing=True,
+            misfire_grace_time=300,
+        )
+        scheduler.add_job(
+            fetch_and_store_news,
+            trigger="interval",
+            minutes=fetch_interval_minutes(),
+            id="news-fetch",
+            replace_existing=True,
+            coalesce=True,
+            max_instances=1,
+            misfire_grace_time=900,
+        )
+        scheduler.start()
+    except Exception as e:
+        app.logger.error(f"Failed to start scheduler: {e}")
 
 
 start_scheduler()
-atexit.register(lambda: scheduler.shutdown(wait=False) if scheduler.running else None)
+
+
+def shutdown_scheduler():
+    if scheduler.running:
+        try:
+            scheduler.shutdown(wait=False)
+        except Exception as e:
+            app.logger.error(f"Error shutting down scheduler: {e}")
+
+
+atexit.register(shutdown_scheduler)
 
 
 def clean_text(value, max_length=500):
@@ -96,6 +109,9 @@ def index():
             current_cat=category_filter,
             query=search_query,
         )
+    except Exception as e:
+        app.logger.error(f"Error in index: {e}")
+        return render_template("error.html", error="Unable to load articles"), 500
     finally:
         session.close()
 
@@ -115,7 +131,9 @@ def health():
     session = Session()
     try:
         session.execute(text("SELECT 1"))
-        return jsonify({"status": "ok"})
+        return jsonify({"status": "ok", "scheduler": "running" if scheduler.running else "stopped"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 503
     finally:
         session.close()
 
@@ -143,7 +161,7 @@ Answer this question: {query}
 Give a clear, neutral answer based on Indian law. Use only these HTML tags: <p>, <br>, <strong>, <ul>, <ol>, <li>.
 Explain that this is general information, not legal advice. Do not invent citations. If uncertain, say so.
 At the end, list 2-4 relevant real judgments only when you are confident they are relevant, with the case name and one-sentence holding."""
-        response = model.generate_content(prompt)
+        response = model.generate_content(prompt, request_options={"timeout": 120})
         answer = getattr(response, "text", "").strip()
         if not answer:
             raise ValueError("The AI returned an empty response")
@@ -154,7 +172,7 @@ At the end, list 2-4 relevant real judgments only when you are confident they ar
             strip=True,
         )
         return jsonify({"response": answer})
-    except Exception:
+    except Exception as e:
         app.logger.exception("AI request failed")
         return jsonify({"error": "Unable to process the request right now. Please try again."}), 502
 
@@ -167,6 +185,9 @@ def article_page(id):
         if not article:
             return render_template("404.html"), 404
         return render_template("article.html", article=article)
+    except Exception as e:
+        app.logger.error(f"Error loading article {id}: {e}")
+        return render_template("error.html", error="Unable to load article"), 500
     finally:
         session.close()
 
@@ -174,6 +195,11 @@ def article_page(id):
 @app.errorhandler(404)
 def not_found(_error):
     return render_template("404.html"), 404
+
+
+@app.errorhandler(500)
+def server_error(_error):
+    return render_template("error.html", error="Internal server error"), 500
 
 
 if __name__ == "__main__":
