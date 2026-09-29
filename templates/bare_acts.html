@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bare Acts - Lawgic</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-color: #0b2545;
+            --accent-color: #d4af37;
+            --bg-color: #f4f7f6;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: #333;
+        }
+        h1, h2, h3, .navbar-brand {
+            font-family: 'Playfair Display', serif;
+        }
+        .navbar {
+            background-color: rgba(255, 255, 255, 0.95) !important;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            padding: 15px 0;
+        }
+        .navbar-brand img {
+            height: 50px;
+            margin-right: 15px;
+            border-radius: 5px;
+        }
+        .navbar-brand {
+            color: var(--primary-color) !important;
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+        
+        .hero {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #133c6d 100%);
+            color: white;
+            padding: 60px 0;
+            text-align: center;
+        }
+        .hero h1 { font-size: 3rem; font-weight: 700; }
+        
+        .act-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
+            border-top: 4px solid var(--accent-color);
+            text-align: center;
+        }
+        .act-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        }
+        .act-icon {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+        .act-title {
+            color: var(--primary-color);
+            font-weight: 700;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+        .act-desc {
+            color: #666;
+            font-size: 0.95rem;
+            margin-bottom: 25px;
+        }
+        .btn-download {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 25px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+        .btn-download:hover {
+            background-color: var(--accent-color);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <i class="fas fa-balance-scale-right me-2" style="color: var(--accent-color); font-size: 1.6rem;"></i><span style="color: var(--primary-color);">Law</span><span style="color: var(--accent-color);">gic</span>
+            </a>
+            <div class="ms-auto d-flex align-items-center">
+                <a href="/" class="btn btn-outline-dark me-2">Home</a>
+                <a href="/bare-acts" class="btn btn-outline-dark me-2">Bare Acts</a>
+                <a href="/ai-search" class="btn btn-dark">AI Research</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="hero">
+        <div class="container">
+            <h1>Essential Bare Acts</h1>
+            <p class="mt-3" style="font-size: 1.2rem; opacity: 0.9;">Direct access to important Indian legislations and codes.</p>
+        </div>
+    </div>
+
+    <div class="container mt-5">
+        <div class="row">
+            
+            <div class="col-md-4">
+                <div class="act-card">
+                    <i class="fas fa-book-open act-icon"></i>
+                    <h3 class="act-title">BNS, 2023</h3>
+                    <p class="act-desc">Bharatiya Nyaya Sanhita (Replaces IPC). The new comprehensive criminal code of India.</p>
+                    <a href="https://www.mha.gov.in/sites/default/files/2023-12/TheBharatiyaNyayaSanhita2023_21122023.pdf" target="_blank" class="btn-download"><i class="fas fa-download me-2"></i>Download PDF</a>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="act-card">
+                    <i class="fas fa-balance-scale act-icon"></i>
+                    <h3 class="act-title">BNSS, 2023</h3>
+                    <p class="act-desc">Bharatiya Nagarik Suraksha Sanhita (Replaces CrPC). The new procedural criminal law.</p>
+                    <a href="https://www.mha.gov.in/sites/default/files/2023-12/TheBharatiyaNagarikSurakshaSanhita2023_21122023.pdf" target="_blank" class="btn-download"><i class="fas fa-download me-2"></i>Download PDF</a>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="act-card">
+                    <i class="fas fa-file-contract act-icon"></i>
+                    <h3 class="act-title">BSA, 2023</h3>
+                    <p class="act-desc">Bharatiya Sakshya Adhiniyam (Replaces Indian Evidence Act). The new law of evidence.</p>
+                    <a href="https://www.mha.gov.in/sites/default/files/2023-12/TheBharatiyaSakshyaAdhiniyam2023_21122023.pdf" target="_blank" class="btn-download"><i class="fas fa-download me-2"></i>Download PDF</a>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="act-card">
+                    <i class="fas fa-gavel act-icon"></i>
+                    <h3 class="act-title">CPC, 1908</h3>
+                    <p class="act-desc">Code of Civil Procedure, 1908. Rules governing civil proceedings in India.</p>
+                    <a href="https://legislative.gov.in/sites/default/files/A1908-05.pdf" target="_blank" class="btn-download"><i class="fas fa-download me-2"></i>Download PDF</a>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="act-card">
+                    <i class="fas fa-landmark act-icon"></i>
+                    <h3 class="act-title">Constitution of India</h3>
+                    <p class="act-desc">The supreme law of India, establishing the framework of the nation.</p>
+                    <a href="https://legislative.gov.in/sites/default/files/COI_English.pdf" target="_blank" class="btn-download"><i class="fas fa-download me-2"></i>Download PDF</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>
