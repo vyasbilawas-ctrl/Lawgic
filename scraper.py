@@ -80,7 +80,7 @@ def rewrite_with_gemini(title, summary):
     try:
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel(os.getenv("GEMINI_SCRAPER_MODEL", "gemini-3.5-flash"))
-                prompt = f"""You are an expert Indian Legal Editor. Your job is to process raw RSS feed entries and format them perfectly.
+        prompt = f"""You are an expert Indian Legal Editor. Your job is to process raw RSS feed entries and format them perfectly.
 Please follow these STRICT rules:
 1. Provide an "Ideal Heading" (TITLE): Professional, respectful, legally accurate, and catchy.
 2. Provide a "Head Note" (SUMMARY): A clear, concise summary of the case/news. If the RAW SUMMARY is empty, short, or says "No summary available.", you MUST generate a logical summary/headnote based solely on the RAW TITLE.
