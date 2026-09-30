@@ -109,7 +109,7 @@ def calculate_similarity(t1, t2):
     w1 = set(re.findall(r'\w+', t1.lower())) - stop_words
     w2 = set(re.findall(r'\w+', t2.lower())) - stop_words
     if not w1 or not w2: return 0
-    return len(w1.intersection(w2)) / min(len(w1), len(w2))
+    return len(w1.intersection(w2)) / max(len(w1), len(w2))
 
 def fetch_and_store_news():
     session = Session()
@@ -129,7 +129,7 @@ def fetch_and_store_news():
                     
                     is_duplicate = False
                     for existing in recent_articles:
-                        if calculate_similarity(title, existing.title) > 0.6:
+                        if calculate_similarity(title, existing.title) > 0.75:
                             is_duplicate = True
                             extra_link = f"<br><br><b>Also reported by {source}:</b> <a href='{link}' target='_blank'>Read here</a>"
                             if extra_link not in existing.summary:
