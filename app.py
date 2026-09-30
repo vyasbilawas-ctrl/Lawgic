@@ -139,7 +139,7 @@ def profile():
 @app.route("/api/force-update")
 def force_update():
     import threading
-    threading.Thread(target=scraper.fetch_and_store_news).start()
+    threading.Thread(target=fetch_and_store_news).start()
     return "Update started in background!"
 
 
