@@ -118,36 +118,61 @@ def fetch_and_store_news():
         recent_date = datetime.utcnow() - timedelta(days=3)
         recent_articles = session.query(Article).filter(Article.published_date >= recent_date).all()
         for source, url in RSS_FEEDS.items():
+            print(f"Fetching {source}: {url}")
             try:
-                response = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=20)
+                response = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=15)
                 response.raise_for_status()
                 feed = feedparser.parse(response.content)
-                for entry in feed.entries[:30]:
-                    link = (entry.get("link") or "").strip()
-                    if not link or session.query(Article.id).filter_by(link=link).first(): continue
-                    title = (entry.get("title") or "Untitled legal update").strip()
-                    
-                    is_duplicate = False
-                    for existing in recent_articles:
-                        if calculate_similarity(title, existing.title) > 0.75:
-                            is_duplicate = True
-                            extra_link = f"<br><br><b>Also reported by {source}:</b> <a href='{link}' target='_blank'>Read here</a>"
-                            if extra_link not in existing.summary:
-                                existing.summary += extra_link
-                                session.add(existing)
-                            break
-                    if is_duplicate: continue
-                    
-                    soup = BeautifulSoup(entry.get("summary", "") or "", "html.parser")
-                    raw = soup.get_text(" ", strip=True)
-                    summary = (raw[:997] + "...") if len(raw) > 1000 else (raw or "No summary available.")
-                    title, summary = rewrite_with_gemini(title, summary)
-                    cat_name = determine_category(title, summary)
-                    session.add(Article(title=title, link=link[:1000], summary=summary, image_url=entry_image(entry, cat_name)[:1000], published_date=parse_date(entry.get("published") or entry.get("updated")), source=source, category=cat_name))
-                    total += 1
-                session.commit()
-            except Exception:
-                session.rollback()
+                for entry in feed.entries[:25]:
+                    try:
+                        link = (entry.get("link") or "").strip()
+                        if not link:
+                            continue
+                        if session.query(Article.id).filter_by(link=link).first():
+                            continue
+                            
+                        title = (entry.get("title") or "Untitled legal update").strip()
+                        
+                        # Deduplication check
+                        is_duplicate = False
+                        for existing in recent_articles:
+                            if calculate_similarity(title, existing.title) > 0.82:
+                                is_duplicate = True
+                                exist_summary = existing.summary or ""
+                                extra_link = f"<br><br><b>Also reported by {source}:</b> <a href='{link}' target='_blank'>Read here</a>"
+                                if extra_link not in exist_summary:
+                                    existing.summary = exist_summary + extra_link
+                                    session.commit()
+                                break
+                        if is_duplicate:
+                            continue
+                            
+                        soup = BeautifulSoup(entry.get("summary", "") or "", "html.parser")
+                        raw = soup.get_text(" ", strip=True)
+                        summary = (raw[:997] + "...") if len(raw) > 1000 else (raw or "No summary available.")
+                        title, summary = rewrite_with_gemini(title, summary)
+                        cat_name = determine_category(title, summary)
+                        
+                        art = Article(
+                            title=title,
+                            link=link[:1000],
+                            summary=summary,
+                            image_url=entry_image(entry, cat_name)[:1000],
+                            published_date=parse_date(entry.get("published") or entry.get("updated")),
+                            source=source,
+                            category=cat_name
+                        )
+                        session.add(art)
+                        session.commit()
+                        recent_articles.append(art)
+                        total += 1
+                        print(f"[{source}] Added: {title[:60]}")
+                    except Exception as entry_err:
+                        session.rollback()
+                        print(f"Error on entry in {source}: {entry_err}")
+            except Exception as feed_err:
+                print(f"Error fetching feed {source}: {feed_err}")
+        print(f"Finished scraping. Total new articles: {total}")
         return total
     finally:
         session.close()

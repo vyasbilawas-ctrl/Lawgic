@@ -38,7 +38,7 @@ def env_bool(name, default=False):
 
 
 def start_scheduler():
-    if scheduler.running or not env_bool("ENABLE_SCHEDULER", False):
+    if scheduler.running or not env_bool("ENABLE_SCHEDULER", True):
         return
     scheduler.add_job(fetch_and_store_news, "date", run_date=datetime.utcnow() + timedelta(seconds=10), id="initial-fetch", replace_existing=True)
     scheduler.add_job(fetch_and_store_news, "interval", minutes=max(5, int(os.getenv("NEWS_FETCH_MINUTES", "60"))), id="news-fetch", replace_existing=True, coalesce=True, max_instances=1)
@@ -47,6 +47,8 @@ def start_scheduler():
 
 try:
     start_scheduler()
+    import threading
+    threading.Thread(target=fetch_and_store_news, daemon=True).start()
 except Exception:
     app.logger.exception("Unable to start scheduler")
 
