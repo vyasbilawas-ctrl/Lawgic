@@ -42,7 +42,7 @@
             background: #f0f4f8;
         }
         </style>
-</head><body><nav class="navbar"><a class="brand" href="/">⚖ Law<span>gic</span></a><div class="nav"><a href="/">News</a><a href="/ai-search">AI Research</a></div></nav><header class="hero"><h1>{{ article.title }}</h1>
+</head><body><nav class="navbar"><a class="brand" href="/">⚖ Law<span>gic</span></a><div class="nav"><a href="/">News</a><a href="/ai-search">AI Research</a><a href="/judicial-exam">Judicial Prep</a></div></nav><header class="hero"><h1>{{ article.title }}</h1>
     <div style="margin: 20px 0;">
         {% if current_user.is_authenticated %}
             <button onclick="toggleBookmark({{ article.id }})" class="btn btn-sm btn-outline-primary"><i class="fas fa-bookmark"></i> Save Article</button>

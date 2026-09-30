@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Judicial Mastery AI | Lawgic</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #0b2545;
+            --secondary: #133c6d;
+            --accent: #d4af37;
+            --bg-color: #f5f7fa;
+            --text-main: #172033;
+            --text-muted: #4a5568;
+            --card-bg: #ffffff;
+        }
+        
+        * { box-sizing: border-box; }
+        
+        body {
+            margin: 0;
+            background: var(--bg-color);
+            font-family: 'Inter', sans-serif;
+            color: var(--text-main);
+        }
+
+        /* Navbar */
+        .navbar {
+            background: var(--card-bg);
+            padding: 18px 6%;
+            box-shadow: 0 2px 12px rgba(11, 37, 69, 0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .brand {
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+            font-size: 1.8rem;
+            color: var(--primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brand span { color: var(--accent); }
+        .nav { display: flex; gap: 24px; align-items: center; }
+        
+        .nav-link {
+            color: var(--primary);
+            font-weight: 600;
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: color 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-link:hover { color: var(--accent); }
+
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 5%;
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 30px;
+        }
+
+        .chat-container {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(11, 37, 69, 0.08);
+            display: flex;
+            flex-direction: column;
+            height: 75vh;
+            border: 1px solid rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: var(--primary);
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+            font-family: 'Cinzel', serif;
+        }
+
+        .chat-header h2 { margin: 0; font-size: 1.4rem; color: var(--accent); }
+        .chat-header p { margin: 5px 0 0; font-size: 0.9rem; opacity: 0.9; font-family: 'Inter', sans-serif;}
+
+        .chat-box {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background: #fafbfc;
+        }
+
+        .msg {
+            max-width: 85%;
+            padding: 15px 20px;
+            border-radius: 12px;
+            line-height: 1.6;
+            font-size: 0.98rem;
+        }
+
+        .msg-user {
+            background: var(--primary);
+            color: #fff;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .msg-ai {
+            background: #fff;
+            color: var(--text-main);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid rgba(0,0,0,0.05);
+            font-family: 'Lora', serif;
+        }
+        
+        .msg-ai table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+        }
+        
+        .msg-ai th, .msg-ai td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        
+        .msg-ai th { background: var(--bg-color); color: var(--primary); }
+
+        .chat-input {
+            display: flex;
+            padding: 15px;
+            background: #fff;
+            border-top: 1px solid rgba(0,0,0,0.05);
+            gap: 10px;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 14px 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 30px;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .chat-input input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2); }
+
+        .chat-input button {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            padding: 0 25px;
+            border-radius: 30px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .chat-input button:hover { background: var(--accent); color: var(--primary); }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .widget {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(11, 37, 69, 0.05);
+        }
+
+        .widget h3 {
+            margin: 0 0 15px;
+            color: var(--primary);
+            font-family: 'Cinzel', serif;
+            font-size: 1.1rem;
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 8px;
+            display: inline-block;
+        }
+
+        .quick-btn {
+            display: block;
+            width: 100%;
+            background: var(--bg-color);
+            border: 1px solid #e2e8f0;
+            color: var(--primary);
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            text-align: left;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .quick-btn i { margin-right: 10px; color: var(--accent); width: 20px; text-align: center; }
+        .quick-btn:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .quick-btn:hover i { color: #fff; }
+
+        @media (max-width: 900px) {
+            .container { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <a class="brand" href="/">
+            <i class="fas fa-balance-scale"></i>
+            LAW<span>GIC</span>
+        </a>
+        <div class="nav">
+            <a href="/" class="nav-link"><i class="fas fa-newspaper"></i> News</a>
+            <a href="/judicial-exam" class="nav-link"><i class="fas fa-graduation-cap"></i> Judicial Prep</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="chat-container">
+            <div class="chat-header">
+                <h2>Judicial Mastery AI</h2>
+                <p>Think like a Judge. Write like a Topper.</p>
+            </div>
+            <div class="chat-box" id="chatBox">
+                <div class="msg msg-ai">
+                    Hello! I am the Lawgic Judicial Mastery AI. I am trained on the New Laws (BNSS, BNS, BSA) and examiner-oriented legal reasoning. <br><br>
+                    How can I assist your preparation today? You can ask me to explain a topic, write a Mains answer, or check your drafted answer!
+                </div>
+            </div>
+            <form class="chat-input" id="chatForm">
+                <input type="text" id="queryInput" placeholder="e.g., Difference between Culpable Homicide and Murder..." required>
+                <button type="submit"><i class="fas fa-paper-plane"></i></button>
+            </form>
+        </div>
+
+        <div class="sidebar">
+            <div class="widget">
+                <h3><i class="fas fa-bolt"></i> Quick Modes</h3>
+                <button class="quick-btn" onclick="setQuery('Explain [Topic] for Quick Revision (Include section and case)')"><i class="fas fa-stopwatch"></i> Quick Revision</button>
+                <button class="quick-btn" onclick="setQuery('Write a 800-word Mains Answer on: [Topic]')"><i class="fas fa-pen-nib"></i> Mains Answer Draft</button>
+                <button class="quick-btn" onclick="setQuery('What is the difference between [X] and [Y]? Include a table.')"><i class="fas fa-columns"></i> Distinguish Drill</button>
+                <button class="quick-btn" onclick="setQuery('Check my answer: [Paste your answer here]')"><i class="fas fa-check-double"></i> Check My Answer</button>
+            </div>
+            
+            <div class="widget" style="background: var(--primary); color: #fff;">
+                <h3 style="color: var(--accent); border-bottom-color: rgba(255,255,255,0.2);">Mastery Tips</h3>
+                <ul style="padding-left: 15px; font-size: 0.9rem; line-height: 1.7; opacity: 0.9;">
+                    <li>Always use <b>New Laws</b> for offences after July 1, 2024.</li>
+                    <li>Break down provisions ingredient-by-ingredient.</li>
+                    <li>Support answers with Landmark & High Court cases.</li>
+                    <li>Apply the "Failure of Justice" test for procedural irregularities.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function setQuery(text) {
+            document.getElementById('queryInput').value = text;
+            document.getElementById('queryInput').focus();
+        }
+
+        document.getElementById('chatForm').addEventListener('submit', async function(e) {
+            e.submitter.disabled = true;
+            e.preventDefault();
+            const input = document.getElementById('queryInput');
+            const query = input.value;
+            input.value = '';
+            
+            const box = document.getElementById('chatBox');
+            box.innerHTML += `<div class="msg msg-user">${query}</div>`;
+            box.scrollTop = box.scrollHeight;
+            
+            const loadingId = 'loading-' + Date.now();
+            box.innerHTML += `<div id="${loadingId}" class="msg msg-ai"><i class="fas fa-spinner fa-spin"></i> Analyzing...</div>`;
+            box.scrollTop = box.scrollHeight;
+
+            try {
+                const res = await fetch('/api/judicial-tutor', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({query: query})
+                });
+                const data = await res.json();
+                document.getElementById(loadingId).remove();
+                
+                if (data.error) {
+                    box.innerHTML += `<div class="msg msg-ai" style="color:red"><i class="fas fa-exclamation-triangle"></i> ${data.error}</div>`;
+                } else {
+                    box.innerHTML += `<div class="msg msg-ai">${data.response}</div>`;
+                }
+            } catch (err) {
+                document.getElementById(loadingId).remove();
+                box.innerHTML += `<div class="msg msg-ai" style="color:red">Error connecting to server.</div>`;
+            }
+            box.scrollTop = box.scrollHeight;
+            e.submitter.disabled = false;
+        });
+    </script>
+</body>
+</html>
