@@ -651,7 +651,7 @@
 
 <nav class="navbar navbar-expand-lg">
     <div class="container-lg">
-        <a class="navbar-brand" href="/"><img src="{{ url_for('static', filename='images/logo.png') }}" alt="Lawgic" height="55" style="object-fit: contain;" onerror="this.onerror=null; this.src=\'/static/images/logo.png\';"></a>
+        <a class="navbar-brand" href="/"><img src="{{ url_for('static', filename='images/logo.png') }}" alt="Lawgic" height="55" style="object-fit: contain;"/static/images/logo.png\';"></a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu" aria-controls="navMenu" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -704,7 +704,7 @@
         <a href="/article/{{ articles[0].id }}" class="featured-card">
             <div class="featured-image">
                   {% if articles[0].image_url %}
-                      <img src="{{ articles[0].image_url }}" alt="Featured Image" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.src=\'/static/images/logo.png\';">
+                      <img src="{{ articles[0].image_url if articles[0].image_url and articles[0].image_url != 'None' else url_for('static', filename='images/logo.png') }}" alt="Featured Image" style="width: 100%; height: 100%; object-fit: cover;"/static/images/logo.png\';">
                   {% else %}
                       <i class="fas fa-gavel"></i>
                   {% endif %}
@@ -738,7 +738,7 @@
                 <a href="/article/{{ article.id }}" class="article-card">
                     <div class="article-thumb">
                           {% if article.image_url %}
-                              <img src="{{ article.image_url }}" alt="News Image" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.src=\'/static/images/logo.png\';">
+                              <img src="{{ article.image_url if article.image_url and article.image_url != 'None' else url_for('static', filename='images/logo.png') }}" alt="News Image" style="width: 100%; height: 100%; object-fit: cover;"/static/images/logo.png\';">
                           {% else %}
                               <i class="fas fa-file-contract"></i>
                           {% endif %}
