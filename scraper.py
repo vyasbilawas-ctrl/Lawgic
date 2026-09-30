@@ -15,6 +15,9 @@ RSS_FEEDS = {
     "Bar and Bench": "https://www.barandbench.com/feed",
     "Verdictum": "https://www.verdictum.in/feed",
     "Indian Kanoon SC": "https://indiankanoon.org/feeds/latest/supremecourt/",
+    "Live Law": "https://www.livelaw.in/feed/",
+    "India Legal": "https://www.indialegallive.com/feed/",
+    "Supreme Court Observer": "https://www.scobserver.in/feed/"
 }
 USER_AGENT = "Lawgic/1.1 (+https://github.com/vyasbilawas-ctrl/Lawgic)"
 
