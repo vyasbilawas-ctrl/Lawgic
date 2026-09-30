@@ -249,4 +249,57 @@ def ask_ai():
         safe_html = bleach.clean(html, tags=['p', 'b', 'i', 'strong', 'em', 'ul', 'ol', 'li', 'br', 'h1', 'h2', 'h3', 'h4', 'code', 'pre', 'blockquote'])
         return jsonify({"response": safe_html})
     except Exception as e:
-        return jsonify({"error": f"AI error: {str(e)}"}), 5000")), debug=env_bool("FLASK_DEBUG", False))
+                return jsonify({"error": f"AI error: {str(e)}"}), 500
+
+@app.route("/judicial-exam")
+def judicial_exam():
+    return render_template("judicial_exam.html")
+
+@app.route("/api/judicial-tutor", methods=["POST"])
+def judicial_tutor():
+    data = request.get_json(silent=True) or {}
+    query = clean_text(data.get("query"), 3000)
+    if not query:
+        return jsonify({"error": "Please ask a legal question or provide an answer to check."}), 400
+        
+    api_key = os.getenv("ZEROLIMIT_API_KEY", "zlai_0e5b7348f1dca79f1f57f056fee587b97609f5fef821cd6f834dd8810b75828c")
+    try:
+        import bleach
+        import markdown
+        from openai import OpenAI
+        
+        client = OpenAI(
+            base_url="https://www.zerolimitai.com/api/v1",
+            api_key=api_key
+        )
+        
+        system_msg = """You are the Lawgic Judicial Mastery AI, an expert judicial educator specialising in Indian law and judicial service exam preparation (like RHJS).
+TEACHING STYLE: Judicial discipline, structured analysis, and examiner-oriented preparation.
+LAW ACCURACY (CRITICAL): Always use NEW LAWS (BNS 2023, BNSS 2023, BSA 2023) for criminal matters. Do NOT cite old IPC/CrPC/IEA unless asked for historical context.
+MANDATORY RULES FOR ANSWERS:
+1. Always give the exact section number.
+2. Break down the ingredients of the offence/provision.
+3. Cite Landmark Supreme Court cases and, if possible, relevant High Court cases.
+4. If comparing concepts, provide a 2-column distinction table.
+5. Include a NEW vs OLD law quick reference table if discussing criminal law.
+6. If the user asks you to 'check their answer', provide a Score, Gap Analysis, and a Topper Version.
+You must adopt a mentor-like, encouraging yet strict tone to train them to think like a Judge."""
+
+        response = client.chat.completions.create(
+            model="auto",
+            messages=[
+                {"role": "system", "content": system_msg},
+                {"role": "user", "content": query}
+            ],
+            max_tokens=2048
+        )
+        
+        text = response.choices[0].message.content
+        html = markdown.markdown(text, extensions=['fenced_code', 'tables'])
+        safe_html = bleach.clean(html, tags=['p', 'b', 'i', 'strong', 'em', 'ul', 'ol', 'li', 'br', 'h1', 'h2', 'h3', 'h4', 'code', 'pre', 'blockquote', 'table', 'thead', 'tbody', 'tr', 'th', 'td'])
+        return jsonify({"response": safe_html})
+    except Exception as e:
+        return jsonify({"error": f"AI error: {str(e)}"}), 500
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", "5000")), debug=env_bool("FLASK_DEBUG", False))
