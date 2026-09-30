@@ -17,7 +17,12 @@ RSS_FEEDS = {
     "Indian Kanoon SC": "https://indiankanoon.org/feeds/latest/supremecourt/",
     "Live Law": "https://www.livelaw.in/feed/",
     "India Legal": "https://www.indialegallive.com/feed/",
-    "Supreme Court Observer": "https://www.scobserver.in/feed/"
+    "Supreme Court Observer": "https://www.scobserver.in/feed/",
+    "Lawctopus": "https://www.lawctopus.com/feed/",
+    "Legally India": "https://www.legallyindia.com/feed",
+    "Livelaw News": "https://www.livelaw.in/xml/top-stories.xml",
+    "PathLegal": "https://www.pathlegal.in/rss.php",
+    "LatestLaws": "https://www.latestlaws.com/rss-feeds/latest-news"
 }
 USER_AGENT = "Lawgic/1.1 (+https://github.com/vyasbilawas-ctrl/Lawgic)"
 

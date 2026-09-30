@@ -1,5 +1,48 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{{ article.title }} | Lawgic</title><link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"><style>:root{--navy:#0b2545;--gold:#d4af37}body{margin:0;background:#f5f7fa;font-family:Inter,sans-serif;color:#172033}.navbar{background:#fff;padding:18px 6%;box-shadow:0 2px 12px #0b254515;display:flex;justify-content:space-between}.brand{font:700 1.8rem 'Playfair Display';color:var(--navy);text-decoration:none}.brand span{color:var(--gold)}.nav a{margin-left:18px;color:var(--navy);font-weight:600;text-decoration:none}.hero{background:linear-gradient(135deg,var(--navy),#133c6d);color:#fff;padding:60px 8%}.hero h1{font:700 clamp(2rem,4vw,3.3rem) 'Playfair Display';max-width:1000px}.meta{opacity:.9}.content{max-width:900px;margin:35px auto;background:#fff;border-radius:16px;padding:clamp(22px,5vw,55px);box-shadow:0 10px 30px #0b254512;line-height:1.8;font-size:1.05rem}.content img{width:100%;max-height:450px;object-fit:cover;border-radius:12px;margin-bottom:25px}.btn{display:inline-block;background:var(--gold);color:var(--navy);padding:12px 20px;border-radius:9px;text-decoration:none;font-weight:700}footer{text-align:center;background:var(--navy);color:#fff;padding:28px}footer a{color:var(--gold)}</style></head><body><nav class="navbar"><a class="brand" href="/">⚖ Law<span>gic</span></a><div class="nav"><a href="/">News</a><a href="/ai-search">AI Research</a></div></nav><header class="hero"><h1>{{ article.title }}</h1>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{{ article.title }} | Lawgic</title><link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"><style>:root{--navy:#0b2545;--gold:#d4af37}body{margin:0;background:#f5f7fa;font-family:Inter,sans-serif;color:#172033}.navbar{background:#fff;padding:18px 6%;box-shadow:0 2px 12px #0b254515;display:flex;justify-content:space-between}.brand{font:700 1.8rem 'Playfair Display';color:var(--navy);text-decoration:none}.brand span{color:var(--gold)}.nav a{margin-left:18px;color:var(--navy);font-weight:600;text-decoration:none}.hero{background:linear-gradient(135deg,var(--navy),#133c6d);color:#fff;padding:60px 8%}.hero h1{font:700 clamp(2rem,4vw,3.3rem) 'Playfair Display';max-width:1000px}.meta{opacity:.9}.content{max-width:900px;margin:35px auto;background:#fff;border-radius:16px;padding:clamp(22px,5vw,55px);box-shadow:0 10px 30px #0b254512;line-height:1.8;font-size:1.05rem}.content img{width:100%;max-height:450px;object-fit:cover;border-radius:12px;margin-bottom:25px}.btn{display:inline-block;background:var(--gold);color:var(--navy);padding:12px 20px;border-radius:9px;text-decoration:none;font-weight:700}footer{text-align:center;background:var(--navy);color:#fff;padding:28px}footer a{color:var(--gold)}
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .article-card {
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            animation: fadeUp 0.6s ease-out forwards;
+        }
+        /* Delay animations for cards */
+        .article-card:nth-child(1) { animation-delay: 0.1s; }
+        .article-card:nth-child(2) { animation-delay: 0.2s; }
+        .article-card:nth-child(3) { animation-delay: 0.3s; }
+        .article-card:nth-child(4) { animation-delay: 0.4s; }
+        .article-card:nth-child(5) { animation-delay: 0.5s; }
+        
+        .article-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(11, 37, 69, 0.1);
+            border-left: 5px solid var(--accent);
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .hero {
+            background: linear-gradient(-45deg, #f5f7fa, #ffffff, #eef2f7, #ffffff) !important;
+            background-size: 400% 400% !important;
+            animation: gradientShift 10s ease infinite !important;
+        }
+        .btn, button, .nav-link, .trend-item {
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            transform: scale(1.05);
+        }
+        .trend-item:hover {
+            transform: translateX(5px);
+            background: #f0f4f8;
+        }
+        </style>
+</head><body><nav class="navbar"><a class="brand" href="/">⚖ Law<span>gic</span></a><div class="nav"><a href="/">News</a><a href="/ai-search">AI Research</a></div></nav><header class="hero"><h1>{{ article.title }}</h1>
     <div style="margin: 20px 0;">
         {% if current_user.is_authenticated %}
             <button onclick="toggleBookmark({{ article.id }})" class="btn btn-sm btn-outline-primary"><i class="fas fa-bookmark"></i> Save Article</button>
