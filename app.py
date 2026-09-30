@@ -135,6 +135,14 @@ def profile():
     finally:
         session.close()
 
+
+@app.route("/api/force-update")
+def force_update():
+    import threading
+    threading.Thread(target=scraper.fetch_and_store_news).start()
+    return "Update started in background!"
+
+
 @app.after_request
 def security_headers(response):
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
