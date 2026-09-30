@@ -63,9 +63,20 @@ def rewrite_with_gemini(title, summary):
     try:
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel(os.getenv("GEMINI_SCRAPER_MODEL", "gemini-3.5-flash"))
-        prompt = f"""Rewrite this into a proper news format. If it is a raw court case (like from Indian Kanoon), give it a short catchy news heading (TITLE) and a clear, brief news summary of the case (SUMMARY). Return exactly TITLE: and SUMMARY: lines.
-TITLE: {title}
-SUMMARY: {summary}"""
+        prompt = f"""You are an expert Indian Legal Editor. Your job is to process raw RSS feed entries, especially from Indian Kanoon or other raw legal feeds, and format them perfectly.
+Please follow these STRICT rules to avoid contempt of court and ensure accurate legal reporting:
+1. Provide an "Ideal Heading" (TITLE): It should be professional, respectful to the courts, legally accurate, and catchy but not sensationalist.
+2. Provide a "Head Note" (SUMMARY): A clear, concise, and lawful summary of the judgment/news. If the input is just a case name with no summary, infer the general nature of the case or provide a standard neutral headnote template.
+3. NEVER commit contempt of court. Always use respectful language for the judiciary.
+
+Input Data:
+RAW TITLE: {title}
+RAW SUMMARY: {summary}
+
+Output exactly in this format:
+TITLE: [Your Ideal Heading]
+SUMMARY: [Your Head Note]
+"""
         response = model.generate_content(prompt)
         new_title, new_summary = title, summary
         for line in getattr(response, "text", "").splitlines():
