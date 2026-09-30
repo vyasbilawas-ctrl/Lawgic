@@ -15,14 +15,14 @@ RSS_FEEDS = {
     "Bar and Bench": "https://www.barandbench.com/feed",
     "Verdictum": "https://www.verdictum.in/feed",
     "Indian Kanoon SC": "https://indiankanoon.org/feeds/latest/supremecourt/",
-    "Live Law": "https://www.livelaw.in/feed/",
+    
     "India Legal": "https://www.indialegallive.com/feed/",
     "Supreme Court Observer": "https://www.scobserver.in/feed/",
     "Lawctopus": "https://www.lawctopus.com/feed/",
-    "Legally India": "https://www.legallyindia.com/feed",
-    "Livelaw News": "https://www.livelaw.in/xml/top-stories.xml",
-    "PathLegal": "https://www.pathlegal.in/rss.php",
-    "LatestLaws": "https://www.latestlaws.com/rss-feeds/latest-news"
+    
+    
+    
+    
 }
 USER_AGENT = "Lawgic/1.1 (+https://github.com/vyasbilawas-ctrl/Lawgic)"
 
@@ -44,7 +44,9 @@ def determine_category(title, summary):
     return "General News"
 
 
-def entry_image(entry):
+
+def entry_image(entry, category):
+    # Try finding image in feed
     for key in ("media_content", "media_thumbnail"):
         for item in entry.get(key, []) or []:
             url = item.get("url")
@@ -54,7 +56,21 @@ def entry_image(entry):
             return enclosure["href"]
     soup = BeautifulSoup(entry.get("summary", "") or entry.get("content", ""), "html.parser")
     image = soup.find("img")
-    return image.get("src", "") if image else ""
+    if image and image.get("src"):
+        return image.get("src")
+        
+    # AI Fallback based on category
+    if category == "Supreme Court":
+        return "https://upload.wikimedia.org/wikipedia/commons/thumb/1/13/Supreme_Court_of_India_-_01.jpg/800px-Supreme_Court_of_India_-_01.jpg"
+    elif category == "High Court":
+        return "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Bombay_High_Court.jpg/800px-Bombay_High_Court.jpg"
+    elif category == "Criminal Law":
+        return "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=800"
+    elif category == "Corporate Law":
+        return "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&q=80&w=800"
+    else:
+        return "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=800"
+
 
 
 def rewrite_with_gemini(title, summary):
@@ -104,7 +120,8 @@ def fetch_and_store_news():
                     raw = soup.get_text(" ", strip=True)
                     summary = (raw[:997] + "...") if len(raw) > 1000 else (raw or "No summary available.")
                     title, summary = rewrite_with_gemini(title, summary)
-                    session.add(Article(title=title, link=link[:1000], summary=summary, image_url=entry_image(entry)[:1000], published_date=parse_date(entry.get("published") or entry.get("updated")), source=source, category=determine_category(title, summary)))
+                    cat_name = determine_category(title, summary)
+                    session.add(Article(title=title, link=link[:1000], summary=summary, image_url=entry_image(entry, cat_name)[:1000], published_date=parse_date(entry.get("published") or entry.get("updated")), source=source, category=cat_name))
                     total += 1
                 session.commit()
             except Exception:
