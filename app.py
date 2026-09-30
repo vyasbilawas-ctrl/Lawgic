@@ -279,5 +279,11 @@ MANDATORY RULES FOR ANSWERS:
     except Exception as e:
         return jsonify({"error": f"AI error: {str(e)}"}), 500
 
+
+@app.route('/OneSignalSDKWorker.js')
+def serve_onesignal_worker():
+    from flask import send_from_directory
+    return send_from_directory('static', 'OneSignalSDKWorker.js')
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", "5000")), debug=env_bool("FLASK_DEBUG", False))

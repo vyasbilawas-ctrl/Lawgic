@@ -49,6 +49,18 @@
         }
         </style>
 
+
+    <!-- OneSignal Push Notifications -->
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(function(OneSignal) {
+        OneSignal.init({
+          appId: "d92d6bef-4c5b-4099-8c2b-1bdf5819383f",
+        });
+      });
+    </script>
+
 </head>
 <body>
 <nav class="navbar"><div class="container d-flex justify-content-between align-items-center"><a class="brand" href="/">⚖ Law<span>gic</span></a><div class="nav"><a href="/">News</a><a href="/bare-acts">Bare Acts</a><a href="/ai-search">AI Research</a></div></div></nav>
