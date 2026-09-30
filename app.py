@@ -82,7 +82,7 @@ def index():
     finally:
         session.close()
 
-# YAHAN THA WO MISSING ROUTE JISKI WAJAH SE 404 AA RAHA THA!
+# YEH RAHA WO MISSING ROUTE JO 404 SOLVE KAREGA!
 @app.route("/article/<int:article_id>")
 def article_detail(article_id):
     session = Session()
