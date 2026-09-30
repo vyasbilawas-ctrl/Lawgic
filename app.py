@@ -8,7 +8,7 @@ from flask_bcrypt import Bcrypt
 from sqlalchemy import or_, text
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from database import init_db, Session, Article, User, Bookmark, Subscriber
+from database import Session, Article, User, Bookmark, Subscriber
 from scraper import fetch_and_store_news
 
 app = Flask(__name__)
@@ -19,7 +19,6 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
 
-init_db()
 
 @login_manager.user_loader
 def load_user(user_id):
