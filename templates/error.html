@@ -33,7 +33,7 @@
 
 </head>
 <body class="bg-light">
-<nav class="navbar bg-white shadow-sm"><div class="container"><a class="navbar-brand" href="/"><img src="{{ url_for('static', filename='images/logo.png') }}" alt="Lawgic" height="55" style="object-fit: contain;"></a></div></nav>
+<nav class="navbar bg-white shadow-sm"><div class="container"><a class="navbar-brand" href="/"><img src="{{ url_for('static', filename='images/logo.png') }}" alt="Lawgic" height="55" style="object-fit: contain;" onerror="this.onerror=null; this.src=\'/static/images/logo.png\';"></a></div></nav>
 <main class="container py-5"><div class="alert alert-danger"><h4>⚠ Error</h4><p>{{ error }}</p><a class="btn btn-primary mt-3" href="/">Back to home</a></div></main>
 </body>
 </html>
