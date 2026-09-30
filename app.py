@@ -290,5 +290,15 @@ def serve_sw():
     from flask import send_from_directory
     return send_from_directory('static', 'sw.js')
 
+
+import re
+def jinja_clean_title(text):
+    if not text: return ""
+    # Sabhi tarah ke URLs (http, https, www) ko hata dega
+    t = re.sub(r'(?i)https?://\S+|www\.\S+', '', str(text)).strip()
+    # Aakhiri bache hue extra symbols (jaise : ya -) ko bhi hatae
+    return re.sub(r'[-:\|]+$', '', t).strip()
+app.jinja_env.filters['clean_title'] = jinja_clean_title
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", "5000")), debug=env_bool("FLASK_DEBUG", False))

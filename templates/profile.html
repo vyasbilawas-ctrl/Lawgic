@@ -51,7 +51,7 @@
                 <div class="col-md-4 mb-4">
                     <div class="card h-100" style="border-radius: 12px; border: 1px solid #e7eaf0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
                         <div class="card-body">
-                            <h5 class="card-title"><a href="/article/{{ article.id }}" style="color: #0b2545; text-decoration: none;">{{ article.title }}</a></h5>
+                            <h5 class="card-title"><a href="/article/{{ article.id }}" style="color: #0b2545; text-decoration: none;">{{ article.title | clean_title }}</a></h5>
                             <p class="card-text text-muted" style="font-size: 0.9rem;">{{ article.summary|striptags|truncate(120) }}</p>
                         </div>
                     </div>
