@@ -2,24 +2,24 @@ import os
 import atexit
 from datetime import datetime, timedelta
 
-from apscheduler.schedulers.background import BackgroundScheduler
-from flask import Flask, jsonify, render_template, request
-from sqlalchemy import or_, text
-
-
+from flask import Flask, render_template, request, jsonify, redirect, url_for
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_bcrypt import Bcrypt
-from database import User, Bookmark
+from sqlalchemy import or_, text
+from apscheduler.schedulers.background import BackgroundScheduler
 
-from database import Article, Session, Subscriber
+from database import init_db, Session, Article, User, Bookmark, Subscriber
 from scraper import fetch_and_store_news
 
 app = Flask(__name__)
-
-app.secret_key = os.getenv("SECRET_KEY", "super-secret-key-lawgic")
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "super-secret-key-12345")
 bcrypt = Bcrypt(app)
-login_manager = LoginManager(app)
+
+login_manager = LoginManager()
+login_manager.init_app(app)
 login_manager.login_view = "login"
+
+init_db()
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -29,13 +29,10 @@ def load_user(user_id):
     finally:
         session.close()
 
-
 scheduler = BackgroundScheduler(timezone="UTC")
-
 
 def env_bool(name, default=False):
     return os.getenv(name, str(default)).strip().lower() in {"1", "true", "yes", "on"}
-
 
 def start_scheduler():
     if scheduler.running or not env_bool("ENABLE_SCHEDULER", True):
@@ -44,7 +41,6 @@ def start_scheduler():
     scheduler.add_job(fetch_and_store_news, "interval", minutes=max(5, int(os.getenv("NEWS_FETCH_MINUTES", "60"))), id="news-fetch", replace_existing=True, coalesce=True, max_instances=1)
     scheduler.start()
 
-
 try:
     start_scheduler()
     import threading
@@ -52,19 +48,63 @@ try:
 except Exception:
     app.logger.exception("Unable to start scheduler")
 
-
 def shutdown_scheduler():
     if scheduler.running:
         scheduler.shutdown(wait=False)
 
-
 atexit.register(shutdown_scheduler)
-
 
 def clean_text(value, limit=2000):
     return str(value or "").strip()[:limit]
 
+@app.after_request
+def security_headers(response):
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    return response
 
+@app.route("/")
+def index():
+    session = Session()
+    try:
+        category = clean_text(request.args.get("category"), 100)
+        search = clean_text(request.args.get("q"), 200)
+        query = session.query(Article)
+        if category:
+            query = query.filter(Article.category == category)
+        if search:
+            term = f"%{search}%"
+            query = query.filter(or_(Article.title.ilike(term), Article.summary.ilike(term)))
+        articles = query.order_by(Article.published_date.desc()).limit(50).all()
+        categories = [row[0] for row in session.query(Article.category).filter(Article.category.isnot(None)).distinct().order_by(Article.category).all()]
+        return render_template("index.html", articles=articles, categories=categories, current_cat=category, query=search)
+    finally:
+        session.close()
+
+# YAHAN THA WO MISSING ROUTE JISKI WAJAH SE 404 AA RAHA THA!
+@app.route("/article/<int:article_id>")
+def article_detail(article_id):
+    session = Session()
+    try:
+        article = session.query(Article).get(article_id)
+        if not article:
+            return "Article not found", 404
+        return render_template("article.html", article=article)
+    finally:
+        session.close()
+
+@app.route("/bare-acts")
+def bare_acts():
+    return render_template("bare_acts.html")
+
+@app.route("/ai-search")
+def ai_search():
+    return render_template("ai_search.html")
+
+@app.route("/judicial-exam")
+def judicial_exam():
+    return render_template("judicial_exam.html")
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -137,51 +177,11 @@ def profile():
     finally:
         session.close()
 
-
 @app.route("/api/force-update")
 def force_update():
     import threading
     threading.Thread(target=fetch_and_store_news).start()
     return "Update started in background!"
-
-
-@app.after_request
-def security_headers(response):
-    response.headers.setdefault("X-Content-Type-Options", "nosniff")
-    response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
-    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
-    return response
-
-
-@app.route("/")
-def index():
-    session = Session()
-    try:
-        category = clean_text(request.args.get("category"), 100)
-        search = clean_text(request.args.get("q"), 200)
-        query = session.query(Article)
-        if category:
-            query = query.filter(Article.category == category)
-        if search:
-            term = f"%{search}%"
-            query = query.filter(or_(Article.title.ilike(term), Article.summary.ilike(term)))
-        articles = query.order_by(Article.published_date.desc()).limit(50).all()
-        categories = [row[0] for row in session.query(Article.category).filter(Article.category.isnot(None)).distinct().order_by(Article.category).all()]
-        return render_template("index.html", articles=articles, categories=categories, current_cat=category, query=search)
-    finally:
-        session.close()
-
-
-@app.route("/bare-acts")
-def bare_acts():
-    return render_template("bare_acts.html")
-
-
-@app.route("/ai-search")
-def ai_search():
-    return render_template("ai_search.html")
-
-
 
 @app.route("/api/subscribe", methods=["POST"])
 def subscribe():
@@ -200,7 +200,6 @@ def subscribe():
         return jsonify({"message": "Successfully subscribed!"}), 200
     except Exception as e:
         session.rollback()
-        app.logger.error(f"Error in subscribe: {e}")
         return jsonify({"error": "Unable to subscribe right now."}), 500
     finally:
         session.close()
@@ -214,7 +213,6 @@ def health():
     finally:
         session.close()
 
-
 @app.route("/api/ask-ai", methods=["POST"])
 def ask_ai():
     data = request.get_json(silent=True) or {}
@@ -223,39 +221,26 @@ def ask_ai():
     if not query:
         return jsonify({"error": "Please enter a legal question."}), 400
     
-    # We are using ZeroLimitAI for the chat bot
     api_key = os.getenv("ZEROLIMIT_API_KEY", "zlai_0e5b7348f1dca79f1f57f056fee587b97609f5fef821cd6f834dd8810b75828c")
     try:
         import bleach
         import markdown
         from openai import OpenAI
         
-        client = OpenAI(
-            base_url="https://www.zerolimitai.com/api/v1",
-            api_key=api_key
-        )
-        
+        client = OpenAI(base_url="https://www.zerolimitai.com/api/v1", api_key=api_key)
         system_msg = f"You are Lawgic's careful Indian legal research assistant. Answer strictly in {language}. Give a clear, neutral answer based on Indian law. Use markdown."
         
         response = client.chat.completions.create(
             model="auto",
-            messages=[
-                {"role": "system", "content": system_msg},
-                {"role": "user", "content": query}
-            ],
+            messages=[{"role": "system", "content": system_msg}, {"role": "user", "content": query}],
             max_tokens=1024
         )
-        
         text = response.choices[0].message.content
         html = markdown.markdown(text, extensions=['fenced_code', 'tables'])
         safe_html = bleach.clean(html, tags=['p', 'b', 'i', 'strong', 'em', 'ul', 'ol', 'li', 'br', 'h1', 'h2', 'h3', 'h4', 'code', 'pre', 'blockquote'])
         return jsonify({"response": safe_html})
     except Exception as e:
-                return jsonify({"error": f"AI error: {str(e)}"}), 500
-
-@app.route("/judicial-exam")
-def judicial_exam():
-    return render_template("judicial_exam.html")
+        return jsonify({"error": f"AI error: {str(e)}"}), 500
 
 @app.route("/api/judicial-tutor", methods=["POST"])
 def judicial_tutor():
@@ -270,11 +255,7 @@ def judicial_tutor():
         import markdown
         from openai import OpenAI
         
-        client = OpenAI(
-            base_url="https://www.zerolimitai.com/api/v1",
-            api_key=api_key
-        )
-        
+        client = OpenAI(base_url="https://www.zerolimitai.com/api/v1", api_key=api_key)
         system_msg = """You are the Lawgic Judicial Mastery AI, an expert judicial educator specialising in Indian law and judicial service exam preparation (like RHJS).
 TEACHING STYLE: Judicial discipline, structured analysis, and examiner-oriented preparation.
 LAW ACCURACY (CRITICAL): Always use NEW LAWS (BNS 2023, BNSS 2023, BSA 2023) for criminal matters. Do NOT cite old IPC/CrPC/IEA unless asked for historical context.
@@ -284,18 +265,13 @@ MANDATORY RULES FOR ANSWERS:
 3. Cite Landmark Supreme Court cases and, if possible, relevant High Court cases.
 4. If comparing concepts, provide a 2-column distinction table.
 5. Include a NEW vs OLD law quick reference table if discussing criminal law.
-6. If the user asks you to 'check their answer', provide a Score, Gap Analysis, and a Topper Version.
-You must adopt a mentor-like, encouraging yet strict tone to train them to think like a Judge."""
+6. If the user asks you to 'check their answer', provide a Score, Gap Analysis, and a Topper Version."""
 
         response = client.chat.completions.create(
             model="auto",
-            messages=[
-                {"role": "system", "content": system_msg},
-                {"role": "user", "content": query}
-            ],
+            messages=[{"role": "system", "content": system_msg}, {"role": "user", "content": query}],
             max_tokens=2048
         )
-        
         text = response.choices[0].message.content
         html = markdown.markdown(text, extensions=['fenced_code', 'tables'])
         safe_html = bleach.clean(html, tags=['p', 'b', 'i', 'strong', 'em', 'ul', 'ol', 'li', 'br', 'h1', 'h2', 'h3', 'h4', 'code', 'pre', 'blockquote', 'table', 'thead', 'tbody', 'tr', 'th', 'td'])
