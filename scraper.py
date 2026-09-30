@@ -164,17 +164,7 @@ def scrape_telegram_channel(channel_info, session, recent_articles):
                     source=channel_info["source"],
                     category=cat_name
                 )
-                
-        # Automatically clean URLs from title before saving
-        for var_name in ['article', 'new_article', 'item']:
-            obj = locals().get(var_name)
-            if obj and hasattr(obj, 'title') and obj.title:
-                # Remove http:// or https:// or www.
-                obj.title = re.sub(r'(?i)https?://\S+|www\.\S+', '', str(obj.title)).strip()
-                # Remove any trailing colons or hyphens left behind (e.g. "News Title : " -> "News Title")
-                obj.title = re.sub(r'[-:\|]+$', '', obj.title).strip()
-        
-        session.add(art)
+                session.add(art)
                 session.commit()
                 recent_articles.append(art)
                 total += 1
@@ -239,17 +229,7 @@ def fetch_and_store_news():
                             source=source,
                             category=cat_name
                         )
-                        
-        # Automatically clean URLs from title before saving
-        for var_name in ['article', 'new_article', 'item']:
-            obj = locals().get(var_name)
-            if obj and hasattr(obj, 'title') and obj.title:
-                # Remove http:// or https:// or www.
-                obj.title = re.sub(r'(?i)https?://\S+|www\.\S+', '', str(obj.title)).strip()
-                # Remove any trailing colons or hyphens left behind (e.g. "News Title : " -> "News Title")
-                obj.title = re.sub(r'[-:\|]+$', '', obj.title).strip()
-        
-        session.add(art)
+                        session.add(art)
                         session.commit()
                         recent_articles.append(art)
                         total += 1
