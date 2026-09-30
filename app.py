@@ -220,56 +220,33 @@ def ask_ai():
     language = "Hindi" if str(data.get("language", "English")).lower().startswith("hi") else "English"
     if not query:
         return jsonify({"error": "Please enter a legal question."}), 400
-    api_key = os.getenv("GEMINI_SEARCH_API_KEY") or os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        return jsonify({"error": "AI service is not configured. Please add GEMINI_API_KEY."}), 503
+    
+    # We are using ZeroLimitAI for the chat bot
+    api_key = os.getenv("ZEROLIMIT_API_KEY", "zlai_0e5b7348f1dca79f1f57f056fee587b97609f5fef821cd6f834dd8810b75828c")
     try:
         import bleach
-        import google.generativeai as genai
         import markdown
-
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel(os.getenv("GEMINI_MODEL", "gemini-3.5-flash"))
-        prompt = f"""You are Lawgic's careful Indian legal research assistant. Answer in {language}.
-Answer this question: {query}
-
-Give a clear, neutral answer based on Indian law. Use markdown for formatting (e.g. **bold**, lists).
-Explain that this is general information, not legal advice. Do not invent citations. If uncertain, say so.
-At the end, list 2-4 relevant real judgments only when you are confident they are relevant, with the case name and one-sentence holding."""
-        response = model.generate_content(prompt, request_options={"timeout": 120})
-        answer = getattr(response, "text", "").strip()
-        if not answer:
-            raise ValueError("The AI returned an empty response")
-            
-        html_answer = markdown.markdown(answer)
-        answer = bleach.clean(
-            html_answer,
-            tags=["p", "br", "strong", "ul", "ol", "li", "em", "b", "i", "h1", "h2", "h3", "h4", "h5", "h6"],
-            attributes={},
-            strip=True,
+        from openai import OpenAI
+        
+        client = OpenAI(
+            base_url="https://www.zerolimitai.com/api/v1",
+            api_key=api_key
         )
-        return jsonify({"response": answer})
-    except Exception:
-        app.logger.exception("AI request failed")
-        return jsonify({"error": "Unable to process the request right now. Please try again."}), 502
-
-
-@app.route("/article/<int:id>")
-def article_page(id):
-    session = Session()
-    try:
-        article = session.query(Article).filter_by(id=id).first()
-        if not article:
-            return render_template("404.html"), 404
-        return render_template("article.html", article=article)
-    finally:
-        session.close()
-
-
-@app.errorhandler(404)
-def not_found(_error):
-    return render_template("404.html"), 404
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.getenv("PORT", "5000")), debug=env_bool("FLASK_DEBUG", False))
+        
+        system_msg = f"You are Lawgic's careful Indian legal research assistant. Answer strictly in {language}. Give a clear, neutral answer based on Indian law. Use markdown."
+        
+        response = client.chat.completions.create(
+            model="auto",
+            messages=[
+                {"role": "system", "content": system_msg},
+                {"role": "user", "content": query}
+            ],
+            max_tokens=1024
+        )
+        
+        text = response.choices[0].message.content
+        html = markdown.markdown(text, extensions=['fenced_code', 'tables'])
+        safe_html = bleach.clean(html, tags=['p', 'b', 'i', 'strong', 'em', 'ul', 'ol', 'li', 'br', 'h1', 'h2', 'h3', 'h4', 'code', 'pre', 'blockquote'])
+        return jsonify({"response": safe_html})
+    except Exception as e:
+        return jsonify({"error": f"AI error: {str(e)}"}), 5000")), debug=env_bool("FLASK_DEBUG", False))
