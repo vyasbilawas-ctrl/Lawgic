@@ -54,6 +54,20 @@
       });
     </script>
 
+
+    <!-- PWA Settings -->
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js');
+        });
+      }
+    </script>
+
 </head><body><nav class="navbar"><a class="brand" href="/">⚖ Law<span>gic</span></a><div class="nav"><a href="/">News</a><a href="/ai-search">AI Research</a><a href="/judicial-exam">Judicial Prep</a></div></nav><header class="hero"><h1>{{ article.title }}</h1>
     <div style="margin: 20px 0;">
         {% if current_user.is_authenticated %}

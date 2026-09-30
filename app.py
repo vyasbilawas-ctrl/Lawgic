@@ -285,5 +285,11 @@ def serve_onesignal_worker():
     from flask import send_from_directory
     return send_from_directory('static', 'OneSignalSDKWorker.js')
 
+
+@app.route('/sw.js')
+def serve_sw():
+    from flask import send_from_directory
+    return send_from_directory('static', 'sw.js')
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", "5000")), debug=env_bool("FLASK_DEBUG", False))
