@@ -547,13 +547,23 @@
             }
         }
     
+        
         @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; transform: translateY(40px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
         .article-card {
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            animation: fadeUp 0.6s ease-out forwards;
+            transition: transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+            animation: fadeUp 0.8s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+            opacity: 0;
+            overflow: hidden;
+            position: relative;
+            background: white;
+            border-radius: 16px;
+            border: 1px solid rgba(0,0,0,0.04);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            display: flex;
+            gap: 18px;
         }
         /* Delay animations for cards */
         .article-card:nth-child(1) { animation-delay: 0.1s; }
@@ -563,32 +573,51 @@
         .article-card:nth-child(5) { animation-delay: 0.5s; }
         
         .article-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(11, 37, 69, 0.1);
-            border-left: 5px solid var(--accent);
+            transform: scale(1.025) translateY(-8px);
+            box-shadow: 0 40px 80px rgba(11, 37, 69, 0.15);
+            border-color: transparent;
+            z-index: 10;
+        }
+
+        .article-thumb {
+            transition: transform 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
         }
         
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        .article-card:hover .article-thumb {
+            transform: scale(1.1);
         }
-        .hero {
-            background: linear-gradient(-45deg, #f5f7fa, #ffffff, #eef2f7, #ffffff) !important;
-            background-size: 400% 400% !important;
-            animation: gradientShift 10s ease infinite !important;
+
+        .featured-card {
+            transition: transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+            overflow: hidden;
         }
+        
+        .featured-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 40px 80px rgba(11, 37, 69, 0.15);
+        }
+        
+        .featured-card:hover .featured-img {
+            transform: scale(1.08);
+        }
+        
+        .featured-img {
+            transition: transform 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
         .btn, button, .nav-link, .trend-item {
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
         }
         .btn:hover {
             transform: scale(1.05);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
         }
         .trend-item:hover {
-            transform: translateX(5px);
+            transform: translateX(10px);
             background: #f0f4f8;
         }
         </style>
+
 
 </head>
 <body>
@@ -603,7 +632,13 @@
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navMenu">
-            <div class="ms-auto d-flex align-items-center flex-wrap"><div id="google_translate_element" style="margin-right: 15px;"></div>
+            <div class="ms-auto d-flex align-items-center flex-wrap">
+
+                <form method="get" action="/" class="d-flex" style="margin-right: 20px; align-items: center; background: #f0f4f8; border-radius: 20px; padding: 2px 15px;">
+                    <i class="fas fa-search" style="color: var(--muted); font-size: 0.9rem;"></i>
+                    <input type="text" name="q" placeholder="Search news..." style="background: transparent; border: none; outline: none; padding: 6px 10px; font-size: 0.9rem; width: 200px;">
+                </form>
+<div id="google_translate_element" style="margin-right: 15px;"></div>
                 <a class="nav-link" href="/"><i class="fas fa-newspaper"></i>News</a>
                 <a class="nav-link notranslate" href="/bare-acts"><i class="fas fa-book"></i>Bare Acts</a>
                 
@@ -634,27 +669,9 @@
     </div>
 </div>
 
-<header class="hero" style="background: linear-gradient(to bottom, #ffffff, #f5f7fa); border-bottom: 1px solid var(--line); padding: 70px 0;">
-    <div class="container-lg text-center">
-        <h1 style="font-size: 4rem; color: var(--primary); margin-bottom: 15px;"><i class="fas fa-balance-scale" style="color: var(--accent); margin-right: 15px;"></i>LAWGIC</h1>
-        <p style="font-size: 1.4rem; color: var(--muted); font-family: 'Lora', serif; max-width: 700px; margin: 0 auto; line-height: 1.8;">India's Premier Legal Intelligence, Bare Acts & AI Research Platform</p>
-    </div>
-</header>
 
-<div class="container-lg">
-    <div class="search-shell">
-        <form method="get" action="/" class="search-row">
-            <input type="text" name="q" value="{{ query or '' }}" placeholder="Search legal news, judgments, and updates...">
-            <button type="submit" class="btn-search">Search</button>
-        </form>
 
-        <div class="quick-tags">
-            <button class="tag" type="button" onclick="window.location.href='/?category=Supreme+Court'">Supreme Court</button>
-            <button class="tag" type="button" onclick="window.location.href='/?category=High+Court'">High Courts</button>
-            <button class="tag" type="button" onclick="window.location.href='/?category=Parliament'">Parliament</button>
-            <button class="tag" type="button" onclick="window.location.href='/?category=Opinion'">Opinion</button>
-        </div>
-    </div>
+
 
     {% if articles %}
     <section class="featured">
